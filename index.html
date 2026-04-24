@@ -2150,7 +2150,7 @@
                 renderResult();
             }
             if (state.mode && document.getElementById('game-area').style.display === 'block') {
-                renderGameView();
+                renderGameView({ preservePickStyle: true });
             }
         }
 
@@ -2560,7 +2560,7 @@
             // Ak je zobrazená hra (napr. gratulácia), okamžite ju preložíme
             const gameArea = document.getElementById('game-area');
             if (gameArea && gameArea.style.display === 'block') {
-                renderGameView();
+                renderGameView({ preservePickStyle: true });
             }
 
             // Aktualizujeme aj štatistiky (názov módu)
@@ -2664,7 +2664,7 @@
 
         const CARD_STYLES = [
             { type: 'text', items: ['1', '2', '3'] },
-            { type: 'color', items: ['#3b82f6', '#f8fafc', '#22c55e'] },
+            { type: 'color', items: ['#3b82f6', '#bb22ee', '#22c55e'] },
             { type: 'text', items: ['🍍', '🍓', '🍉'] },
             { type: 'text', items: ['🦄', '🐲', '🧚'] }
         ];
@@ -2702,7 +2702,8 @@
             document.getElementById('header-progress').innerText = `${packName} • ${modeName} • ${answered} / ${total}`;
         }
 
-        function renderGameView() {
+        function renderGameView(options = {}) {
+            const preservePickStyle = Boolean(options.preservePickStyle);
             const area = document.getElementById('game-area');
             const res = document.getElementById('result-area');
             area.style.display = 'block'; res.style.display = 'none';
@@ -2844,21 +2845,23 @@
 
                 setupQuickQuestionFan();
             } else if (state.mode === 'pick') {
-                // Vygenerujeme náhodný vizuál, ktorý nie je rovnaký ako posledné dva
-                let newStyle;
-                do {
-                    newStyle = CARD_STYLES[Math.floor(Math.random() * CARD_STYLES.length)];
-                } while (state.lastStyles && state.lastStyles.includes(newStyle.items[0]));
+                if (!preservePickStyle || !state.cardStyle) {
+                    // Vygenerujeme náhodný vizuál, ktorý nie je rovnaký ako posledné dva
+                    let newStyle;
+                    do {
+                        newStyle = CARD_STYLES[Math.floor(Math.random() * CARD_STYLES.length)];
+                    } while (state.lastStyles && state.lastStyles.includes(newStyle.items[0]));
 
-                state.cardStyle = newStyle;
+                    state.cardStyle = newStyle;
 
-                // Uložíme si históriu posledných dvoch štýlov
-                if (!state.lastStyles) state.lastStyles = [];
-                state.lastStyles = [newStyle.items[0], ...state.lastStyles].slice(0, 2);
+                    // Uložíme si históriu posledných dvoch štýlov
+                    if (!state.lastStyles) state.lastStyles = [];
+                    state.lastStyles = [newStyle.items[0], ...state.lastStyles].slice(0, 2);
 
-                saveCurrentState();
+                    saveCurrentState();
+                    playCardReveal();
+                }
 
-                playCardReveal();
                 const style = state.cardStyle;
                 let html = '<div class="card-grid">';
                 let slots = getWheelSlots();
@@ -3315,6 +3318,9 @@
         }
 
         function nextRound() {
+            if (state.mode === 'pick') {
+                state.cardStyle = null;
+            }
             renderGameView();
         }
         function nextQuickQuestion() {
