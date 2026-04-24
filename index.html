@@ -589,25 +589,29 @@
         }
 
         .question-fan-card[data-rotate="-1"],
-.question-fan-card[data-rotate="1"] {
-    --fan-rotate: 0deg;
-}
+        .question-fan-card[data-rotate="1"] {
+            --fan-rotate: 0deg;
+        }
 
-.question-fan-stage.hint-swipe {
-    animation: hintSwipe 0.75s ease 1;
-}
+        .question-fan-stage.hint-swipe {
+            animation: hintSwipe 0.75s ease 1;
+        }
 
-@keyframes hintSwipe {
-    0%, 100% {
-        transform: translateX(0);
-    }
-    40% {
-        transform: translateX(-18px);
-    }
-    80% {
-        transform: translateX(12px);
-    }
-}
+        @keyframes hintSwipe {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            40% {
+                transform: translateX(-18px);
+            }
+
+            80% {
+                transform: translateX(12px);
+            }
+        }
 
         .question-fan-arrow {
             position: absolute;
@@ -1343,25 +1347,29 @@
             }
 
             to {
-                transform: translate3d(0, 0, 0) scale(1);
+                transform: translate3d(0, 0x    , 0) scale(1);
                 opacity: 1;
             }
         }
 
         .question-card-mark {
-    position: absolute;
-    top: 12px;
-    left: 50%;
-    transform: translateX(-50%);
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
 
-    font-size: 1.2rem;
-    font-weight: 900;
+            font-size: 1.2rem;
+            font-weight: 900;
 
-    color: rgba(255, 255, 255, 0.75);
+            color: rgba(255, 255, 255, 0.75);
 
-    z-index: 3;
-    pointer-events: none;
-}
+            z-index: 3;
+            pointer-events: none;
+
+
+        }
+
+        
     </style>
 </head>
 
@@ -1906,7 +1914,7 @@
         const ICONS = {
             wheel: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity:0.9"><circle cx="10" cy="12" r="8"/><path d="M14 12L22 9V15Z" fill="currentColor" stroke="none"/></svg>`,
             quick_q: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.9"><path d="M7 4.5h10A2.5 2.5 0 0 1 19.5 7v8A2.5 2.5 0 0 1 17 17.5H10.7L7 20v-2.5A2.5 2.5 0 0 1 4.5 15V7A2.5 2.5 0 0 1 7 4.5Z"/><path d="M10.2 9.2a2 2 0 1 1 3.6 1.15c-.45.6-1.08.92-1.48 1.28-.32.29-.47.55-.47 1.02"/><circle cx="12" cy="14.7" r="0.78" fill="currentColor" stroke="none"/></svg>`,
-            pick: `<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="opacity:0.92"><rect x="1" y="6.4" width="6.1" height="11.2" rx="1.4"/><rect x="9" y="6.4" width="6.1" height="11.2" rx="1.4"/><rect x="17" y="6.4" width="6.1" height="11.2" rx="1.4"/></svg>`,
+            pick: `<svg width="22.5" height="22.5" viewBox="0 0 24 24" fill="currentColor" style="opacity:0.92"><rect x="1" y="6.4" width="6.1" height="11.2" rx="1.4"/><rect x="9" y="6.4" width="6.1" height="11.2" rx="1.4"/><rect x="17" y="6.4" width="6.1" height="11.2" rx="1.4"/></svg>`,
             pexeso: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity:0.9"><rect x="3" y="3" width="7.5" height="7.5" rx="1"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1" stroke-opacity="0.7"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1" stroke-opacity="0.4"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1"/></svg>`
         };
 
@@ -2619,13 +2627,13 @@
                     ? ((state.quickQCursor % questions.length) + questions.length) % questions.length
                     : 0;
 
-                    const cardMarks = [
-    '✦','●','◆','★','✺','⬟','⬢','⬡','✹','✸',
-    '✷','✶','✳','✴','✵','✻','✼','✽','✾','✿',
-    '❖','❋','❂','❈','❉','❊','✧','✪','✫','✬'
-];
+                const cardMarks = [
+                    '✦', '●', '◆', '★', '✺', '⬟', '⬢', '⬡', '✹', '✸',
+                    '✷', '✶', '✳', '✴', '✵', '✻', '✼', '✽', '✾', '✿',
+                    '❖', '❋', '❂', '❈', '❉', '❊', '✧', '✪', '✫', '✬'
+                ];
 
-const cardsHtml = questions.map((item, order) => `
+                const cardsHtml = questions.map((item, order) => `
     <div class="question-fan-card"
         data-question-index="${item.index}"
         data-question-order="${order}"
@@ -2823,10 +2831,10 @@ const cardsHtml = questions.map((item, order) => `
             setTimeout(() => {
                 fan.closest('.question-fan-stage')?.classList.add('hint-swipe');
 
-    setTimeout(() => {
-        fan.closest('.question-fan-stage')?.classList.remove('hint-swipe');
-    }, 900);
-}, 80);
+                setTimeout(() => {
+                    fan.closest('.question-fan-stage')?.classList.remove('hint-swipe');
+                }, 900);
+            }, 80);
         }
         window.stepQuickQuestionFan = function (direction) {
             const fan = document.getElementById('question-fan');
@@ -3129,21 +3137,21 @@ const cardsHtml = questions.map((item, order) => `
             renderGameView();
         }
         function nextQuickQuestion() {
-    renderGameView();
+            renderGameView();
 
-    requestAnimationFrame(() => {
-        const fan = document.getElementById('question-fan');
-        const stage = fan?.closest('.question-fan-stage');
-        if (!stage) return;
+            requestAnimationFrame(() => {
+                const fan = document.getElementById('question-fan');
+                const stage = fan?.closest('.question-fan-stage');
+                if (!stage) return;
 
-        stage.classList.remove('hint-swipe');
-        void stage.offsetWidth;
+                stage.classList.remove('hint-swipe');
+                void stage.offsetWidth;
 
-        setTimeout(() => {
-            stage.classList.add('hint-swipe');
-        }, 80);
-    });
-}
+                setTimeout(() => {
+                    stage.classList.add('hint-swipe');
+                }, 80);
+            });
+        }
 
         function goHome() {
             location.reload();
