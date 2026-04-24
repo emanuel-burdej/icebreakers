@@ -17,6 +17,84 @@
             --text: #f8fafc;
             --text-dim: #94a3b8;
             --accent: #ef4444;
+            --header-bg: rgba(11, 17, 32, 0.8);
+            --sidebar-bg: #0b1120;
+            --surface-soft: rgba(255, 255, 255, 0.05);
+            --surface-soft-strong: rgba(255, 255, 255, 0.08);
+            --surface-card: rgba(255, 255, 255, 0.03);
+            --surface-card-hover: rgba(255, 255, 255, 0.06);
+            --surface-ghost: rgba(255, 255, 255, 0.035);
+            --surface-ghost-border: rgba(255, 255, 255, 0.07);
+            --result-bg: rgba(11, 17, 32, 0.42);
+            --menu-bg: #1e293b;
+            --menu-option-bg: #1f2937;
+            --input-bg: rgba(255, 255, 255, 0.05);
+            --input-focus-bg: rgba(255, 255, 255, 0.08);
+            --toggle-bg: rgba(255, 255, 255, 0.06);
+            --toggle-border: rgba(255, 255, 255, 0.12);
+            --toggle-icon: var(--text-dim);
+            --field-text: #ffffff;
+            --wheel-hub-fill: #1e293b;
+            --wheel-hub-stroke: #a855f7;
+            --question-card-bg: linear-gradient(180deg, rgb(37, 43, 77), rgb(21, 25, 48));
+            --question-card-border-soft: rgba(255, 255, 255, 0.08);
+            --question-card-mark: rgba(255, 255, 255, 0.12);
+            --question-card-badge: rgba(255, 255, 255, 0.88);
+            --question-card-arrow: rgba(255, 255, 255, 0.58);
+            --question-card-arrow-hover: rgba(255, 255, 255, 0.9);
+            --question-top-mark: rgba(255, 255, 255, 0.75);
+            --pick-card-bg:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
+                linear-gradient(135deg, rgba(99, 102, 241, 0.16), rgba(168, 85, 247, 0.08));
+            --pick-card-border: rgba(255, 255, 255, 0.12);
+            --pick-card-inner-border: rgba(255, 255, 255, 0.1);
+            --pick-card-glow: rgba(255, 255, 255, 0.12);
+            --pick-card-stripe: rgba(255, 255, 255, 0.05);
+            --pick-card-label: rgba(255, 255, 255, 0.42);
+            --modal-table-text: #ffffff;
+        }
+
+        body[data-theme="light"] {
+            --bg: #eef2ff;
+            --card-bg: rgba(255, 255, 255, 0.74);
+            --border: rgba(99, 102, 241, 0.14);
+            --text: #0f172a;
+            --text-dim: #64748b;
+            --header-bg: rgba(238, 242, 255, 0.9);
+            --sidebar-bg: #f8fafc;
+            --surface-soft: rgba(99, 102, 241, 0.08);
+            --surface-soft-strong: rgba(99, 102, 241, 0.12);
+            --surface-card: rgba(255, 255, 255, 0.78);
+            --surface-card-hover: rgba(99, 102, 241, 0.08);
+            --surface-ghost: rgba(99, 102, 241, 0.06);
+            --surface-ghost-border: rgba(99, 102, 241, 0.12);
+            --result-bg: rgba(255, 255, 255, 0.84);
+            --menu-bg: #ffffff;
+            --menu-option-bg: #ffffff;
+            --input-bg: rgba(255, 255, 255, 0.92);
+            --input-focus-bg: #ffffff;
+            --toggle-bg: rgba(99, 102, 241, 0.08);
+            --toggle-border: rgba(99, 102, 241, 0.14);
+            --toggle-icon: #475569;
+            --field-text: #0f172a;
+            --wheel-hub-fill: #e2e8f0;
+            --wheel-hub-stroke: #6366f1;
+            --question-card-bg: linear-gradient(180deg, #ffffff, #eef2ff);
+            --question-card-border-soft: rgba(99, 102, 241, 0.12);
+            --question-card-mark: rgba(99, 102, 241, 0.14);
+            --question-card-badge: #334155;
+            --question-card-arrow: rgba(51, 65, 85, 0.62);
+            --question-card-arrow-hover: #0f172a;
+            --question-top-mark: rgba(71, 85, 105, 0.78);
+            --pick-card-bg:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(238, 242, 255, 0.96)),
+                linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(168, 85, 247, 0.06));
+            --pick-card-border: rgba(99, 102, 241, 0.16);
+            --pick-card-inner-border: rgba(99, 102, 241, 0.12);
+            --pick-card-glow: rgba(99, 102, 241, 0.08);
+            --pick-card-stripe: rgba(99, 102, 241, 0.045);
+            --pick-card-label: rgba(71, 85, 105, 0.5);
+            --modal-table-text: #0f172a;
         }
 
         * {
@@ -39,7 +117,7 @@
             display: grid;
             grid-template-columns: 1fr auto 1fr;
             align-items: center;
-            background: rgba(11, 17, 32, 0.8);
+            background: var(--header-bg);
             backdrop-filter: blur(10px);
             position: sticky;
             top: 0;
@@ -63,13 +141,78 @@
 
         .lang-select {
             background: var(--bg);
-            color: #fff;
+            color: var(--text);
             border: 1px solid var(--border);
             padding: 5px 10px;
             border-radius: 8px;
             outline: none;
             font-size: 0.8rem;
             cursor: pointer;
+        }
+
+        .header-controls {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .theme-toggle {
+            width: 34px;
+            height: 34px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            border: 1px solid var(--toggle-border);
+            background: var(--toggle-bg);
+            color: var(--toggle-icon);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .theme-toggle:hover {
+            transform: translateY(-1px);
+            color: var(--text);
+            border-color: rgba(99, 102, 241, 0.28);
+        }
+
+        body[data-theme="light"] .dropdown-item:hover,
+        body[data-theme="light"] .settings-item:hover,
+        body[data-theme="light"] .header-btn:hover {
+            background: var(--surface-soft);
+        }
+
+        body[data-theme="light"] .history-card,
+        body[data-theme="light"] .glass,
+        body[data-theme="light"] .modal-card {
+            box-shadow: 0 12px 30px rgba(148, 163, 184, 0.14);
+        }
+
+        body[data-theme="light"] .card-item {
+            background: #ffffff;
+            border-color: rgba(99, 102, 241, 0.14);
+            box-shadow: 0 12px 24px rgba(148, 163, 184, 0.16);
+        }
+
+        body[data-theme="light"] .card-item:hover {
+            background: #ffffff;
+            border-color: rgba(99, 102, 241, 0.35);
+        }
+
+        body[data-theme="light"] .header-pack,
+        body[data-theme="light"] .type-label,
+        body[data-theme="light"] .settings-value {
+            text-shadow: none;
+        }
+
+        body[data-theme="light"] .geegee.banner,
+        body[data-theme="light"] .main-text,
+        body[data-theme="light"] .modal-title,
+        body[data-theme="light"] h2,
+        body[data-theme="light"] h3,
+        body[data-theme="light"] h5 {
+            color: var(--text);
         }
 
         #sidebar {
@@ -79,7 +222,7 @@
             width: 85%;
             max-width: 400px;
             height: 100%;
-            background: var(--bg);
+            background: var(--sidebar-bg);
             z-index: 2000;
             transform: translate3d(calc(-100% - 20px), 0, 0);
             transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
@@ -136,10 +279,10 @@
         .notes-area {
             width: 100%;
             height: 350px;
-            background: rgba(255, 255, 255, 0.05);
+            background: var(--surface-soft);
             border: 1px solid var(--border);
             border-radius: 16px;
-            color: white;
+            color: var(--field-text);
             padding: 15px;
             margin: 10px 0;
             resize: none;
@@ -336,8 +479,8 @@
         }
 
         .wheel-hub {
-            fill: #1e293b;
-            stroke: #a855f7;
+            fill: var(--wheel-hub-fill);
+            stroke: var(--wheel-hub-stroke);
             stroke-width: 2;
         }
 
@@ -402,10 +545,8 @@
             flex: 0 0 104px;
             height: 152px;
             border-radius: 18px;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            background:
-                linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
-                linear-gradient(135deg, rgba(99, 102, 241, 0.16), rgba(168, 85, 247, 0.08));
+            border: 1px solid var(--pick-card-border);
+            background: var(--pick-card-bg);
             box-shadow: 0 10px 24px rgba(2, 6, 23, 0.18);
             scroll-snap-align: center;
             cursor: pointer;
@@ -419,11 +560,11 @@
             position: absolute;
             inset: 10px;
             border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--pick-card-inner-border);
             background:
-                radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.12), transparent 28%),
+                radial-gradient(circle at 30% 20%, var(--pick-card-glow), transparent 28%),
                 repeating-linear-gradient(135deg,
-                    rgba(255, 255, 255, 0.05) 0 6px,
+                    var(--pick-card-stripe) 0 6px,
                     transparent 6px 12px);
         }
 
@@ -437,7 +578,7 @@
             font-size: 1rem;
             font-weight: 800;
             letter-spacing: 2px;
-            color: rgba(255, 255, 255, 0.42);
+            color: var(--pick-card-label);
         }
 
         .pick-card:hover {
@@ -504,7 +645,7 @@
             left: 50%;
             border-radius: 22px;
             border: 1px solid rgba(99, 102, 241, 0.28);
-            background: linear-gradient(180deg, rgb(37, 43, 77), rgb(21, 25, 48));
+            background: var(--question-card-bg);
             box-shadow: 0 10px 20px rgba(2, 6, 23, 0.18);
             cursor: pointer;
             transition: transform 0.28s ease, opacity 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease, filter 0.28s ease;
@@ -525,7 +666,7 @@
             position: absolute;
             inset: 14px;
             border-radius: 18px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--question-card-border-soft);
             background: transparent;
         }
 
@@ -540,7 +681,7 @@
 
             font-size: 2.4rem;
             font-weight: 800;
-            color: rgba(255, 255, 255, 0.12);
+            color: var(--question-card-mark);
 
             pointer-events: none;
         }
@@ -621,7 +762,7 @@
             height: 36px;
             border: none;
             background: transparent;
-            color: rgba(255, 255, 255, 0.58);
+            color: var(--question-card-arrow);
             font-size: 1.9rem;
             line-height: 1;
             display: flex;
@@ -640,7 +781,7 @@
         }
 
         .question-fan-arrow:hover {
-            color: rgba(255, 255, 255, 0.9);
+            color: var(--question-card-arrow-hover);
         }
 
         .question-fan-card-inner {
@@ -658,7 +799,7 @@
             font-size: 0.92rem;
             font-weight: 800;
             letter-spacing: 2.6px;
-            color: rgba(255, 255, 255, 0.88);
+            color: var(--question-card-badge);
             text-transform: uppercase;
             text-align: center;
         }
@@ -706,8 +847,8 @@
         }
 
         .pin-btn {
-            background: rgba(255, 255, 255, 0.035);
-            border: 1px solid rgba(255, 255, 255, 0.07);
+            background: var(--surface-ghost);
+            border: 1px solid var(--surface-ghost-border);
             padding: 8px 12px;
             border-radius: 12px;
             font-size: 0.76rem;
@@ -724,8 +865,8 @@
         }
 
         .pin-btn:hover {
-            background: rgba(255, 255, 255, 0.06);
-            color: white;
+            background: var(--surface-card-hover);
+            color: var(--text);
         }
 
         .pin-btn.active {
@@ -764,8 +905,8 @@
             align-items: center;
             padding: 28px 24px 20px;
             animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            background: rgba(11, 17, 32, 0.42);
-            border: 1px solid rgba(255, 255, 255, 0.14);
+            background: var(--result-bg);
+            border: 1px solid var(--border);
             box-shadow: none;
             border-radius: 18px;
         }
@@ -927,7 +1068,7 @@
         }
 
         .history-card {
-            background: rgba(255, 255, 255, 0.03);
+            background: var(--surface-card);
             padding: 20px;
             border-radius: 20px;
             margin-bottom: 15px;
@@ -966,7 +1107,7 @@
             position: absolute;
             right: 0;
             top: 100%;
-            background: #1e293b;
+            background: var(--menu-bg);
             border: 1px solid var(--border);
             border-radius: 12px;
             z-index: 1000;
@@ -1047,13 +1188,17 @@
             transition: 0.3s;
         }
 
+        body[data-theme="light"] .modal-overlay {
+            background: rgba(241, 245, 249, 0.72);
+        }
+
         .modal-overlay.active {
             display: flex;
             opacity: 1;
         }
 
         .modal-card {
-            background: #1e293b;
+            background: var(--menu-bg);
             border: 1px solid var(--border);
             border-radius: 28px;
             padding: 30px;
@@ -1076,10 +1221,10 @@
 
         .modal-input {
             width: 100%;
-            background: rgba(255, 255, 255, 0.05);
+            background: var(--input-bg);
             border: 1px solid var(--border);
             border-radius: 12px;
-            color: white;
+            color: var(--field-text);
             padding: 12px;
             margin-bottom: 20px;
             font-family: inherit;
@@ -1089,7 +1234,7 @@
 
         .modal-input:focus {
             border-color: var(--primary);
-            background: rgba(255, 255, 255, 0.08);
+            background: var(--input-focus-bg);
         }
 
         .currency-grid {
@@ -1168,7 +1313,7 @@
             gap: 16px;
             padding: 14px 16px;
             border-radius: 14px;
-            background: rgba(255, 255, 255, 0.03);
+            background: var(--surface-card);
             border: 1px solid var(--border);
             margin-bottom: 10px;
             cursor: pointer;
@@ -1176,7 +1321,7 @@
         }
 
         .settings-item:hover {
-            background: rgba(255, 255, 255, 0.06);
+            background: var(--surface-card-hover);
         }
 
         .settings-item:active {
@@ -1222,7 +1367,7 @@
         }
 
         .settings-select {
-            background: rgba(255, 255, 255, 0.05);
+            background: var(--input-bg);
             border: 1px solid var(--border);
             color: var(--primary);
             padding: 8px 34px 8px 12px;
@@ -1254,7 +1399,7 @@
 
         .settings-select option {
             color: var(--primary);
-            background: #1f2937;
+            background: var(--menu-option-bg);
         }
 
         .settings-edit {
@@ -1361,7 +1506,7 @@
             font-size: 1.2rem;
             font-weight: 900;
 
-            color: rgba(255, 255, 255, 0.75);
+            color: var(--question-top-mark);
 
             z-index: 3;
             pointer-events: none;
@@ -1379,9 +1524,9 @@
         <div onclick="toggleSidebar()"
             style="cursor:pointer; display:flex; align-items:center; padding: 10px 5px; width: 40px;">
             <div style="display:flex; flex-direction:column; gap:4px; width:20px;">
-                <div style="height:2px; background:white; border-radius:2px;"></div>
-                <div style="height:2px; background:white; border-radius:2px; width:14px;"></div>
-                <div style="height:2px; background:white; border-radius:2px;"></div>
+                <div style="height:2px; background:var(--text); border-radius:2px;"></div>
+                <div style="height:2px; background:var(--text); border-radius:2px; width:14px;"></div>
+                <div style="height:2px; background:var(--text); border-radius:2px;"></div>
             </div>
         </div>
 
@@ -1391,7 +1536,8 @@
                 data-i18n="start_sub">Búrajte ľady štýlovo</div>
         </div>
 
-        <div style="display:flex; justify-content:flex-end;">
+        <div class="header-controls">
+            <button id="themeToggle" class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme" title="Toggle theme"></button>
             <select class="lang-select" id="langSelect" onchange="updateLang()">
                 <option value="sk">SK</option>
                 <option value="cz">CZ</option>
@@ -1657,7 +1803,7 @@
                 pkg_collaboration_sub: "Tímové výzvy a úlohy", select_mode: "Spôsob hry",
                 mode_wheel: "Koleso šťastia", mode_quick_q: "Iba otázky", mode_pick: "Tri karty", mode_pexeso: "Pexeso",
                 desc_wheel: "Koleso vyberie otázku alebo úlohu.",
-                desc_quick_q: "Prejdi si vejárom otázok a jednu si vytiahni.",
+                desc_quick_q: "Scrolluj a vyber si jednu otázku.",
                 desc_pick: "Vyber jednu z troch kariet s otázkou alebo úlohou.",
                 desc_pexeso: "Nájdi dvojicu a vyber 2 ľudí na splnenie úlohy. Bez zhody ju plníš ty s vybraným parťákom.",
                 available_modes: "Dostupné módy",
@@ -1707,7 +1853,7 @@
                 pkg_collaboration_sub: "Týmové výzvy a úkoly", select_mode: "Způsob hry",
                 mode_wheel: "Kolo štěstí", mode_quick_q: "Jen otázky", mode_pick: "Tři karty", mode_pexeso: "Pexeso",
                 desc_wheel: "Kolo vybere otázku nebo úkol.",
-                desc_quick_q: "Projdi si vějířem otázek a jednu si vytáhni.",
+                desc_quick_q: "Scrolluj a vyber si jednu otázku.",
                 desc_pick: "Vyber jednu ze tří karet s otázkou nebo úkolem.",
                 desc_pexeso: "Najdi dvojici a vyber 2 lidi ke splnění úkolu. Bez shody jej plníš ty s parťákem.",
                 available_modes: "Dostupné módy",
@@ -1756,7 +1902,7 @@
                 pkg_collaboration_sub: "Team challenges and tasks", select_mode: "Game Style",
                 mode_wheel: "Spinning Wheel", mode_quick_q: "Questions Only", mode_pick: "Three Cards", mode_pexeso: "Pexeso",
                 desc_wheel: "The wheel picks a question or task.",
-                desc_quick_q: "Browse a fan of questions and pull one out.",
+                desc_quick_q: "Scroll and pick one question.",
                 desc_pick: "Pick one of three cards with a question or task.",
                 desc_pexeso: "Find a match to pick 2 people for the task. No match? You complete it with a partner.",
                 available_modes: "Available modes",
@@ -1920,6 +2066,7 @@
 
         let state = {
             lang: localStorage.getItem('ib_lang') || 'sk',
+            theme: localStorage.getItem('ib_theme') || 'dark',
             orgName: localStorage.getItem('ib_org_name') || 'GeeGee',
             donationMode: localStorage.getItem('ib_donation_mode') || 'all',
             donationAmounts: JSON.parse(localStorage.getItem('ib_donation_amounts') || '{"q":{"eur":2,"czk":50},"t":{"eur":5,"czk":120},"l":{"eur":10,"czk":240},"pexeso_t":{"eur":2,"czk":50}}'),
@@ -1961,6 +2108,7 @@
         }
 
         window.onload = () => {
+            applyTheme(state.theme || 'dark');
             renderPacks();
             renderHomeHistory();
             document.getElementById('langSelect').value = state.lang;
@@ -1971,6 +2119,39 @@
 
         function getOrgName() {
             return (localStorage.getItem('ib_org_name') || state.orgName || 'GeeGee').trim() || 'GeeGee';
+        }
+
+        function applyTheme(theme) {
+            state.theme = theme === 'light' ? 'light' : 'dark';
+            document.body.dataset.theme = state.theme;
+            localStorage.setItem('ib_theme', state.theme);
+            updateThemeToggle();
+        }
+
+        function updateThemeToggle() {
+            const btn = document.getElementById('themeToggle');
+            if (!btn) return;
+            const isLight = state.theme === 'light';
+            btn.innerHTML = isLight
+                ? `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>`
+                : `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2.2M12 19.8V22M4.93 4.93l1.56 1.56M17.51 17.51l1.56 1.56M2 12h2.2M19.8 12H22M4.93 19.07l1.56-1.56M17.51 6.49l1.56-1.56"/></svg>`;
+            btn.title = isLight ? 'Switch to dark mode' : 'Switch to light mode';
+            btn.setAttribute('aria-label', btn.title);
+        }
+
+        function toggleTheme() {
+            applyTheme(state.theme === 'light' ? 'dark' : 'light');
+            if (state.screen === 'mode') renderModeSelection();
+            if (state.screen === 'settings') renderSettingsView();
+            if (state.screen === 'history') renderHistoryList();
+            renderPacks();
+            renderHomeHistory();
+            if (document.getElementById('result-area').style.display === 'flex' && state.historyIndex >= 0) {
+                renderResult();
+            }
+            if (state.mode && document.getElementById('game-area').style.display === 'block') {
+                renderGameView();
+            }
         }
 
         function renderSettingsView() {
@@ -2255,7 +2436,7 @@
 
             let tableHtml = `
                 <div style="max-height: 350px; overflow-y: auto; margin-bottom: 20px; padding-right: 5px;">
-                    <table style="width:100%; border-collapse:collapse; font-size:0.85rem; text-align:left; color:white;">
+                    <table style="width:100%; border-collapse:collapse; font-size:0.85rem; text-align:left; color:var(--modal-table-text);">
                         <thead>
                             <tr style="border-bottom:2px solid var(--border); color:var(--text-dim);">
                                 <th style="padding:10px 5px;">${I18N[state.lang].col_name}</th>
@@ -2308,9 +2489,9 @@
                 div.style = 'padding: 20px; margin-bottom: 12px; cursor: pointer; display: flex; align-items: center; gap: 18px;';
                 div.onclick = () => selectMode(m);
                 div.innerHTML = `
-                    <div style="color: var(--text-dim); opacity: 0.6; flex-shrink: 0; width: 32px; display: flex; align-items: center; justify-content: center;">${icon}</div>
+                        <div style="color: var(--text-dim); opacity: 0.75; flex-shrink: 0; width: 32px; display: flex; align-items: center; justify-content: center;">${icon}</div>
                     <div style="flex-grow: 1;">
-                        <div style="color: white; font-weight: 700; font-size: 1.1rem; margin-bottom: 4px;">
+                        <div style="color: var(--text); font-weight: 700; font-size: 1.1rem; margin-bottom: 4px;">
                             ${I18N[state.lang]['mode_' + m]}
                         </div>
                         <div style="font-size: 0.75rem; opacity: 0.6; line-height: 1.4;">
