@@ -11,6 +11,13 @@ const LEGACY_CARD_TYPE = {
 };
 
 const DONATION_AMOUNT_DEFAULTS = {
+    question: { eur: 1, czk: 25 },
+    instantTask: { eur: 2, czk: 50 },
+    longTermChallenge: { eur: 3, czk: 75 },
+    pexesoInstantTask: { eur: 1, czk: 25 }
+};
+
+const LEGACY_DONATION_AMOUNT_DEFAULTS = {
     question: { eur: 2, czk: 50 },
     instantTask: { eur: 5, czk: 120 },
     longTermChallenge: { eur: 10, czk: 240 },
@@ -87,6 +94,10 @@ function escapeHtml(value) {
 }
 
 function normalizeDonationAmounts(amounts = {}) {
+    if (isLegacyDonationAmountDefaults(amounts)) {
+        return { ...DONATION_AMOUNT_DEFAULTS };
+    }
+
     return {
         ...DONATION_AMOUNT_DEFAULTS,
         question: amounts.question || amounts[String.fromCharCode(113)] || DONATION_AMOUNT_DEFAULTS.question,
@@ -94,6 +105,23 @@ function normalizeDonationAmounts(amounts = {}) {
         longTermChallenge: amounts.longTermChallenge || amounts[String.fromCharCode(108)] || DONATION_AMOUNT_DEFAULTS.longTermChallenge,
         pexesoInstantTask: amounts.pexesoInstantTask || amounts[`pexeso_${String.fromCharCode(116)}`] || DONATION_AMOUNT_DEFAULTS.pexesoInstantTask
     };
+}
+
+function isSameDonationAmount(a, b) {
+    return Number(a?.eur) === b.eur && Number(a?.czk) === b.czk;
+}
+
+function isLegacyDonationAmountDefaults(amounts = {}) {
+    const normalizedAmounts = {
+        question: amounts.question || amounts[String.fromCharCode(113)],
+        instantTask: amounts.instantTask || amounts[String.fromCharCode(116)],
+        longTermChallenge: amounts.longTermChallenge || amounts[String.fromCharCode(108)],
+        pexesoInstantTask: amounts.pexesoInstantTask || amounts[`pexeso_${String.fromCharCode(116)}`]
+    };
+
+    return Object.keys(LEGACY_DONATION_AMOUNT_DEFAULTS).every(key =>
+        isSameDonationAmount(normalizedAmounts[key], LEGACY_DONATION_AMOUNT_DEFAULTS[key])
+    );
 }
 
 function amountKeySuffix(key) {
@@ -109,13 +137,15 @@ function normalizeSessionData(data) {
     data.donationAmounts = normalizeDonationAmounts(data.donationAmounts || {});
     return data;
 }
+const storedDonationAmounts = JSON.parse(localStorage.getItem('ib_donation_amounts') || '{}');
+
 let state = {
     lang: localStorage.getItem('ib_lang') || 'cz',
     theme: localStorage.getItem('ib_theme') || 'dark',
     appStyle: normalizeAppStyle(localStorage.getItem('ib_app_style')),
     orgName: localStorage.getItem('ib_org_name') || APP_STYLE_CONFIG.normal.orgName,
     donationMode: localStorage.getItem('ib_donation_mode') || 'all',
-    donationAmounts: normalizeDonationAmounts(JSON.parse(localStorage.getItem('ib_donation_amounts') || '{}')),
+    donationAmounts: normalizeDonationAmounts(storedDonationAmounts),
     mode: null,
     cardStyle: null,
     pool: [],
@@ -128,6 +158,10 @@ let state = {
     quickQCursor: 0,
     isSpinning: false
 };
+
+if (isLegacyDonationAmountDefaults(storedDonationAmounts)) {
+    localStorage.setItem('ib_donation_amounts', JSON.stringify(state.donationAmounts));
+}
 
 if (!localStorage.getItem('ib_app_style')) {
     localStorage.setItem('ib_app_style', state.appStyle);
