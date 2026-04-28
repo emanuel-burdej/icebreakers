@@ -936,7 +936,7 @@ body[data-theme="light"] .modal-overlay {
     width: 42px;
     height: 42px;
     display: block;
-    transform: translate(-12px, 24px);
+    transform: translate(0, 24px);
     transform-origin: 50% 50%;
     filter:
         drop-shadow(0 0 1px rgba(255, 255, 255, 0.9))
