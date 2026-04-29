@@ -226,6 +226,22 @@ window.onload = () => {
 
 let activeModalConfig = null;
 
+const HEADER_ACTION_ICONS = {
+    home: `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M9.5 20v-5h5v5"/></svg>`,
+    participants: `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0"/><circle cx="17" cy="9" r="2.4"/><path d="M14.5 15.5A4.7 4.7 0 0 1 20.5 20"/></svg>`,
+    mode: `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10"/><path d="M18 7h2"/><circle cx="16" cy="7" r="2"/><path d="M4 17h2"/><path d="M10 17h10"/><circle cx="8" cy="17" r="2"/></svg>`
+};
+
+function setHeaderActionButton(id, iconKey, label, onClick) {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+
+    btn.innerHTML = HEADER_ACTION_ICONS[iconKey] || '';
+    btn.title = label || '';
+    btn.setAttribute('aria-label', label || '');
+    btn.onclick = onClick;
+}
+
 function getOrgName() {
     const config = getAppStyleConfig();
     return (localStorage.getItem('ib_org_name') || state.orgName || config.orgName).trim() || config.orgName;
@@ -798,6 +814,8 @@ function getAvailableModes(packKey) {
 }
 
 function renderModeSelection() {
+    setHeaderActionButton('mode-left-btn', 'home', I18N[state.lang].navHome, goHome);
+
     const container = document.getElementById('modes-container');
     if (!container) return;
     container.innerHTML = "";
@@ -855,11 +873,35 @@ function showScreen(id, direction = 'forward') {
 
 function handleGameBack() {
     if (state.packKey === 'collaboration') {
-        state.collaborationEditingParticipants = true;
-        renderGameView();
+        if (state.collaborationEditingParticipants || !state.collaborationParticipants?.length) {
+            goHome();
+        } else {
+            state.collaborationEditingParticipants = true;
+            renderGameView();
+        }
         return;
     }
     showScreen('mode', 'back');
+}
+
+function updateGameLeftButton() {
+    const isResultVisible = document.getElementById('result-area')?.style.display === 'flex';
+
+    if (state.packKey === 'collaboration') {
+        if (state.collaborationEditingParticipants || !state.collaborationParticipants?.length) {
+            setHeaderActionButton('game-left-btn', 'home', I18N[state.lang].navHome, goHome);
+        } else {
+            setHeaderActionButton('game-left-btn', 'participants', I18N[state.lang].editParticipants, handleGameBack);
+        }
+        return;
+    }
+
+    setHeaderActionButton(
+        'game-left-btn',
+        isResultVisible ? 'mode' : 'mode',
+        I18N[state.lang].changeMode,
+        handleGameBack
+    );
 }
 
 function toggleSidebar() {
@@ -1055,6 +1097,7 @@ function renderGameView(options = {}) {
     area.innerHTML = "";
 
     updateStats();
+    updateGameLeftButton();
 
     const remainingQuestions = state.pool ? state.pool.filter(card => card.cardType === 'question').length : 0;
 
@@ -1872,6 +1915,7 @@ function renderResult() {
     const res = document.getElementById('result-area');
     res.style.display = 'flex';
     res.dataset.cardType = card.cardType;
+    updateGameLeftButton();
 
     const resTypeEl = document.getElementById('res-type');
     const resTextEl = document.getElementById('res-text');

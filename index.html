@@ -93,7 +93,7 @@
 
         <section id="screen-mode" class="screen">
             <div class="game-header">
-                <div class="header-btn" onclick="showScreen('start', 'back')">←</div>
+                <div id="mode-left-btn" class="header-btn" onclick="goHome()">←</div>
                 <div class="header-center">
                     <div class="header-mode-progress" data-i18n="selectMode">Vyberte štýl</div>
                 </div>
@@ -104,7 +104,7 @@
 
         <section id="screen-game" class="screen">
             <div class="game-header">
-                <div class="header-btn" onclick="handleGameBack()">←</div>
+                <div id="game-left-btn" class="header-btn" onclick="handleGameBack()">←</div>
                 <div class="header-center">
                     <div id="header-pack" class="header-pack" onclick="renameCurrentSession()"></div>
                     <div id="header-progress" class="header-mode-progress"></div>
