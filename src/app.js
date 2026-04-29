@@ -135,6 +135,15 @@ function normalizeSessionData(data) {
     data.pool = normalizeCards(data.pool || []);
     data.history = normalizeCards(data.history || []);
     data.donationAmounts = normalizeDonationAmounts(data.donationAmounts || {});
+    data.collaborationParticipants = data.collaborationParticipants || [];
+    data.collaborationRemainingParticipants = data.collaborationRemainingParticipants || [];
+    data.collaborationFlipped = data.collaborationFlipped || [];
+    data.collaborationUsage = data.collaborationUsage || {};
+    data.collaborationPairUsage = data.collaborationPairUsage || {};
+    data.collaborationPairDeck = data.collaborationPairDeck || [];
+    data.collaborationPendingPair = data.collaborationPendingPair || null;
+    data.collaborationLastPairKey = data.collaborationLastPairKey || '';
+    data.collaborationLastPair = data.collaborationLastPair || [];
     return data;
 }
 const storedDonationAmounts = JSON.parse(localStorage.getItem('ib_donation_amounts') || '{}');
@@ -156,6 +165,15 @@ let state = {
     note: "",
     lastStyles: [],
     quickQCursor: 0,
+    collaborationParticipants: [],
+    collaborationRemainingParticipants: [],
+    collaborationFlipped: [],
+    collaborationUsage: {},
+    collaborationPairUsage: {},
+    collaborationPairDeck: [],
+    collaborationPendingPair: null,
+    collaborationLastPairKey: '',
+    collaborationLastPair: [],
     isSpinning: false
 };
 
@@ -354,6 +372,125 @@ function instantiateCardStyle(style) {
     };
 }
 
+function shuffleItems(items) {
+    return [...items].sort(() => Math.random() - 0.5);
+}
+
+function getCollaborationTotalPairs(data = state) {
+    return (data.answered || 0) + (data.pool ? data.pool.length : 0);
+}
+
+function getCollaborationAnsweredPairs(data = state) {
+    return data.answered || 0;
+}
+
+function isCollaborationPexeso(data = state) {
+    return data.packKey === 'collaboration' && normalizeMode(data.mode) === 'pexeso';
+}
+
+function getCollaborationPairKey(pair) {
+    return [...pair].sort((a, b) => a.localeCompare(b)).join('||');
+}
+
+function getCollaborationUsage(name) {
+    return Number(state.collaborationUsage?.[name] || 0);
+}
+
+function getCollaborationPairUsage(pair) {
+    return Number(state.collaborationPairUsage?.[getCollaborationPairKey(pair)] || 0);
+}
+
+function makeCollaborationPairs(names) {
+    const pairs = [];
+    for (let i = 0; i < names.length; i++) {
+        for (let j = i + 1; j < names.length; j++) {
+            pairs.push([names[i], names[j]]);
+        }
+    }
+    return pairs;
+}
+
+function parseCollaborationPairKey(key) {
+    return String(key || '').split('||').filter(Boolean);
+}
+
+function refreshCollaborationPairDeck() {
+    const pairs = makeCollaborationPairs(state.collaborationParticipants || []);
+    const lastPairKey = state.collaborationLastPairKey || '';
+    const unusedPairs = pairs.filter(pair => getCollaborationPairUsage(pair) === 0);
+    let deck = shuffleItems((unusedPairs.length ? unusedPairs : pairs).map(pair => getCollaborationPairKey(pair)));
+
+    if (deck.length > 1 && deck[0] === lastPairKey) {
+        deck.push(deck.shift());
+    }
+
+    state.collaborationPairDeck = deck;
+}
+
+function getNextCollaborationPair() {
+    const participantSet = new Set(state.collaborationParticipants || []);
+    let deck = (state.collaborationPairDeck || []).filter(key => {
+        const pair = parseCollaborationPairKey(key);
+        return pair.length === 2 && pair.every(name => participantSet.has(name));
+    });
+
+    if (!deck.length) {
+        refreshCollaborationPairDeck();
+        deck = state.collaborationPairDeck || [];
+    }
+
+    if (!deck.length) return [];
+
+    const pairKey = pickNextCollaborationPairKey(deck);
+    state.collaborationPairDeck = deck.filter(key => key !== pairKey);
+    return parseCollaborationPairKey(pairKey);
+}
+
+function getRecentCollaborationPairs(limit = 2) {
+    return (state.history || [])
+        .slice()
+        .reverse()
+        .filter(card => Array.isArray(card.assignees) && card.assignees.length === 2)
+        .slice(0, limit)
+        .map(card => card.assignees);
+}
+
+function pickNextCollaborationPairKey(deck) {
+    const recentPairs = getRecentCollaborationPairs(2);
+    const lastPairKey = state.collaborationLastPairKey || '';
+    const scored = deck.map(key => {
+        const pair = parseCollaborationPairKey(key);
+        const lastOverlap = recentPairs[0] ? pair.filter(name => recentPairs[0].includes(name)).length : 0;
+        const previousOverlap = recentPairs[1] ? pair.filter(name => recentPairs[1].includes(name)).length : 0;
+        const recentAppearances = pair.reduce((total, name) => {
+            return total + recentPairs.flat().filter(recentName => recentName === name).length;
+        }, 0);
+        const score =
+            (key === lastPairKey ? 10000 : 0) +
+            (lastOverlap * 120) +
+            (previousOverlap * 35) +
+            (recentAppearances * 20) +
+            (pair.reduce((total, name) => total + getCollaborationUsage(name), 0) * 2);
+
+        return { key, score };
+    });
+    const minScore = Math.min(...scored.map(item => item.score));
+    const best = scored.filter(item => item.score === minScore);
+    return best[Math.floor(Math.random() * best.length)].key;
+}
+
+function moveCollaborationNameToIndex(name, targetIdx) {
+    const board = state.collaborationBoard || [];
+    const sourceIdx = board.findIndex((item, index) => item === name && index !== targetIdx);
+    if (sourceIdx >= 0) {
+        [board[targetIdx], board[sourceIdx]] = [board[sourceIdx], board[targetIdx]];
+    } else {
+        board[targetIdx] = name;
+    }
+
+    return targetIdx;
+}
+
 function getStyleHistoryKey(style) {
     return style.sourceType || style.type;
 }
@@ -456,10 +593,11 @@ function getSessionData(key) {
 
 function getSessionMeta(data) {
     const isQuickQuestions = data.mode === 'quickQuestions';
+    const isCollaboration = isCollaborationPexeso(data);
     const historyQuestions = isQuickQuestions ? (data.history || []).filter(card => card.cardType === 'question').length : 0;
     const poolQuestions = isQuickQuestions ? (data.pool || []).filter(card => card.cardType === 'question').length : 0;
-    const total = isQuickQuestions ? historyQuestions + poolQuestions : data.answered + (data.pool ? data.pool.length : 0);
-    const answered = isQuickQuestions ? historyQuestions : data.answered;
+    const total = isCollaboration ? getCollaborationTotalPairs(data) : (isQuickQuestions ? historyQuestions + poolQuestions : data.answered + (data.pool ? data.pool.length : 0));
+    const answered = isCollaboration ? getCollaborationAnsweredPairs(data) : (isQuickQuestions ? historyQuestions : data.answered);
     const packKey = (data.packKey || 'basic').toLowerCase().replace(' ', '_');
     return {
         total,
@@ -484,7 +622,9 @@ function refreshHistoryViews() {
 function getHistoryMenuHtml(key, data) {
     return `
                 <div class="dropdown-item" onclick="event.stopPropagation(); renameHistoryItem('${key}')">${I18N[state.lang].rename}</div>
-                ${data.packKey !== 'collaboration' ? `<div class="dropdown-item" onclick="event.stopPropagation(); changeHistoryMode('${key}')">${I18N[state.lang].changeMode}</div>` : ''}
+                ${data.packKey !== 'collaboration'
+                    ? `<div class="dropdown-item" onclick="event.stopPropagation(); changeHistoryMode('${key}')">${I18N[state.lang].changeMode}</div>`
+                    : `<div class="dropdown-item" onclick="event.stopPropagation(); editHistoryParticipants('${key}')">${I18N[state.lang].editParticipants}</div>`}
                 <div class="dropdown-item" onclick="event.stopPropagation(); editHistoryNote('${key}')">${I18N[state.lang].editNote}</div>
                 <div class="dropdown-item" onclick="event.stopPropagation(); deleteHistoryItem('${key}')">${I18N[state.lang].delete}</div>
             `;
@@ -714,6 +854,11 @@ function showScreen(id, direction = 'forward') {
 }
 
 function handleGameBack() {
+    if (state.packKey === 'collaboration') {
+        state.collaborationEditingParticipants = true;
+        renderGameView();
+        return;
+    }
     showScreen('mode', 'back');
 }
 
@@ -829,16 +974,33 @@ function startNewSession(packKey) {
     state.packKey = packKey;
     state.date = new Date().toLocaleString();
     state.title = "";
-    state.pool = normalizeCards([...PACKS[packKey]]).sort(() => Math.random() - 0.5);
+    state.pool = shuffleItems(normalizeCards([...PACKS[packKey]]));
     state.history = [];
     state.historyIndex = -1;
     state.answered = 0;
     state.note = "";
     state.quickQCursor = 0;
+    state.cardStyle = null;
+    state.pexesoBoard = [];
+    state.pexesoFlipped = [];
+    state.pexesoResult = null;
+    state.collaborationParticipants = [];
+    state.collaborationRemainingParticipants = [];
+    state.collaborationFlipped = [];
+    state.collaborationUsage = {};
+    state.collaborationPairUsage = {};
+    state.collaborationPairDeck = [];
+    state.collaborationPendingPair = null;
+    state.collaborationLastPairKey = '';
+    state.collaborationLastPair = [];
     document.getElementById('noteInput').value = "";
 
     saveCurrentState();
-    showScreen('mode');
+    if (packKey === 'collaboration') {
+        selectMode('pexeso');
+    } else {
+        showScreen('mode');
+    }
 }
 
 function resumeSession() {
@@ -869,12 +1031,16 @@ function updateStats() {
     const packKey = (state.packKey || 'basic').toLowerCase().replace(' ', '_');
     const packName = I18N[state.lang][PACK_I18N_KEY[packKey]] || state.packKey;
     const modeName = I18N[state.lang][MODE_I18N_KEY[normalizeMode(state.mode)]];
-    const total = state.mode === 'quickQuestions'
-        ? (state.history ? state.history.filter(card => card.cardType === 'question').length : 0) + (state.pool ? state.pool.filter(card => card.cardType === 'question').length : 0)
-        : state.answered + (state.pool ? state.pool.length : 0);
-    const answered = state.mode === 'quickQuestions'
-        ? (state.history ? state.history.filter(card => card.cardType === 'question').length : 0)
-        : state.answered;
+    const total = isCollaborationPexeso()
+        ? getCollaborationTotalPairs()
+        : (state.mode === 'quickQuestions'
+            ? (state.history ? state.history.filter(card => card.cardType === 'question').length : 0) + (state.pool ? state.pool.filter(card => card.cardType === 'question').length : 0)
+            : state.answered + (state.pool ? state.pool.length : 0));
+    const answered = isCollaborationPexeso()
+        ? getCollaborationAnsweredPairs()
+        : (state.mode === 'quickQuestions'
+            ? (state.history ? state.history.filter(card => card.cardType === 'question').length : 0)
+            : state.answered);
     const title = state.title || state.date || I18N[state.lang].session;
 
     document.getElementById('header-pack').innerText = title;
@@ -891,6 +1057,11 @@ function renderGameView(options = {}) {
     updateStats();
 
     const remainingQuestions = state.pool ? state.pool.filter(card => card.cardType === 'question').length : 0;
+
+    if (isCollaborationPexeso()) {
+        renderCollaborationPexeso(area);
+        return;
+    }
 
     if (state.mode === 'quickQuestions' && remainingQuestions === 0) {
         area.innerHTML = `<div style="text-align:center; padding: 40px 20px; color: var(--text-dim);"><h3 style="margin-bottom:10px;">${I18N[state.lang].congratsTitle}</h3><p>${I18N[state.lang].congratsDesc}</p></div>`;
@@ -1098,6 +1269,149 @@ function renderGameView(options = {}) {
     }
 }
 
+function renderCollaborationPexeso(area) {
+    if (state.collaborationEditingParticipants || !state.collaborationParticipants || state.collaborationParticipants.length < 2) {
+        renderCollaborationParticipantsEditor(area, state.collaborationParticipants || []);
+        return;
+    }
+
+    const participants = state.collaborationParticipants || [];
+
+    if (!state.pool || state.pool.length === 0) {
+        area.innerHTML = `<div class="collab-finished"><h3>${I18N[state.lang].congratsTitle}</h3><p>${I18N[state.lang].congratsDesc}</p></div>`;
+        return;
+    }
+
+    if (!state.collaborationBoard || state.collaborationBoard.length !== participants.length) {
+        state.collaborationBoard = shuffleItems(participants);
+        state.collaborationFlipped = [];
+        saveCurrentState();
+    }
+
+    const selectedCount = state.collaborationFlipped?.length || 0;
+    const columns = getCollaborationGridColumns(state.collaborationBoard.length);
+    let html = `
+        <div class="collab-board-wrap">
+            <div class="collab-board" style="grid-template-columns: repeat(${columns}, minmax(0, 1fr));">
+    `;
+
+    state.collaborationBoard.forEach((name, index) => {
+        const isFlipped = state.collaborationFlipped.includes(index);
+        html += `
+            <button class="collab-name-card ${isFlipped ? 'is-flipped' : ''}" onclick="flipPexesoCard(${index})" type="button">
+                <span>${isFlipped ? escapeHtml(name) : '?'}</span>
+            </button>
+        `;
+    });
+
+    html += `
+            </div>
+        </div>
+    `;
+    area.innerHTML = html;
+}
+
+function renderCollaborationParticipantsEditor(area, names = []) {
+    const sample = I18N[state.lang].participantSample || '';
+    const currentNames = names.length ? names.join('\n') : '';
+    area.innerHTML = `
+        <div class="collab-setup glass">
+            <div class="collab-setup-title">${I18N[state.lang].participantsTitle}</div>
+            <p class="collab-setup-desc">${I18N[state.lang].participantsDesc}</p>
+            <textarea id="participants-input" class="collab-participants-input" placeholder="${escapeHtml(sample)}">${escapeHtml(currentNames)}</textarea>
+            <button class="btn collab-continue-btn" onclick="startCollaborationParticipants()">${I18N[state.lang].continue}</button>
+        </div>
+    `;
+    setTimeout(() => document.getElementById('participants-input')?.focus(), 60);
+}
+
+function getCollaborationGridColumns(count) {
+    if (count <= 2) return count;
+    if (count <= 4) return 2;
+    if (count <= 9) return 3;
+    return 4;
+}
+
+window.startCollaborationParticipants = function () {
+    const input = document.getElementById('participants-input');
+    const uniqueNames = normalizeCollaborationParticipantNames(input?.value || '');
+
+    if (uniqueNames.length < 2) {
+        showModal({
+            title: I18N[state.lang].participantsNeedTwoTitle,
+            desc: I18N[state.lang].participantsNeedTwoDesc,
+            onConfirm: () => { }
+        });
+        return;
+    }
+
+    updateCollaborationParticipantsForState(state, uniqueNames, { resetStats: !state.collaborationParticipants?.length });
+    state.collaborationEditingParticipants = false;
+    saveCurrentState();
+    renderGameView();
+};
+
+function normalizeCollaborationParticipantNames(rawValue) {
+    let names = String(rawValue || '')
+        .split(/\n|,/)
+        .map(name => name.trim())
+        .filter(Boolean);
+
+    if (names.length === 0) {
+        names = [I18N[state.lang].defaultParticipantOne, I18N[state.lang].defaultParticipantTwo];
+    }
+
+    if (names.length === 1) {
+        names.push(I18N[state.lang].defaultParticipantTwo);
+    }
+
+    const uniqueNames = [...new Set(names)];
+    if (uniqueNames.length === 1) {
+        const fallback = uniqueNames[0] === I18N[state.lang].defaultParticipantTwo
+            ? I18N[state.lang].defaultParticipantOne
+            : I18N[state.lang].defaultParticipantTwo;
+        uniqueNames.push(fallback);
+    }
+
+    return uniqueNames;
+}
+
+function updateCollaborationParticipantsForState(target, names, options = {}) {
+    const participantSet = new Set(names);
+    target.collaborationParticipants = names;
+    target.collaborationRemainingParticipants = shuffleItems(names);
+    target.collaborationBoard = [];
+    target.collaborationFlipped = [];
+    target.collaborationPendingPair = null;
+
+    if (options.resetStats) {
+        target.collaborationUsage = {};
+        target.collaborationPairUsage = {};
+        target.collaborationLastPairKey = '';
+        target.collaborationLastPair = [];
+        target.answered = 0;
+    } else {
+        target.collaborationUsage = Object.fromEntries(
+            Object.entries(target.collaborationUsage || {}).filter(([name]) => participantSet.has(name))
+        );
+        target.collaborationPairUsage = Object.fromEntries(
+            Object.entries(target.collaborationPairUsage || {}).filter(([key]) => {
+                const pair = parseCollaborationPairKey(key);
+                return pair.length === 2 && pair.every(name => participantSet.has(name));
+            })
+        );
+        target.collaborationLastPair = (target.collaborationLastPair || []).filter(name => participantSet.has(name));
+        if (parseCollaborationPairKey(target.collaborationLastPairKey).some(name => !participantSet.has(name))) {
+            target.collaborationLastPairKey = '';
+        }
+    }
+
+    const previousState = state;
+    state = target;
+    refreshCollaborationPairDeck();
+    state = previousState;
+}
+
 function getQuickQuestionDelta(index, activeIndex, total) {
     let delta = index - activeIndex;
     if (delta > total / 2) delta -= total;
@@ -1253,6 +1567,11 @@ window.selectQuickQuestion = function (idx, order) {
 };
 
 window.flipPexesoCard = function (idx) {
+    if (isCollaborationPexeso()) {
+        flipCollaborationCard(idx);
+        return;
+    }
+
     if (state.pexesoFlipped.includes(idx)) return;
     if (state.pexesoFlipped.length >= 2) return;
 
@@ -1278,6 +1597,115 @@ window.flipPexesoCard = function (idx) {
         }, 350);
     }
 };
+
+function flipCollaborationCard(idx) {
+    if (!state.collaborationBoard || !state.collaborationBoard[idx]) return;
+    if (state.collaborationFlipped.includes(idx)) return;
+    if (state.collaborationFlipped.length >= 2) return;
+
+    if (state.collaborationFlipped.length === 0) {
+        idx = prepareFirstCollaborationPick(idx);
+    } else if (state.collaborationFlipped.length === 1) {
+        idx = prepareSecondCollaborationPick(idx);
+    }
+
+    state.collaborationFlipped.push(idx);
+    renderGameView();
+
+    if (state.collaborationFlipped.length === 2) {
+        const [i1, i2] = state.collaborationFlipped;
+        const pair = [state.collaborationBoard[i1], state.collaborationBoard[i2]];
+        saveCurrentState();
+
+        setTimeout(() => {
+            revealCollaborationTask(pair);
+        }, 350);
+    }
+}
+
+function prepareFirstCollaborationPick(clickedIdx) {
+    let pair = state.collaborationPendingPair;
+    if (!Array.isArray(pair) || pair.length !== 2) {
+        pair = getNextCollaborationPair();
+        if (pair.length !== 2) return clickedIdx;
+        state.collaborationPendingPair = pair;
+    }
+
+    const firstName = Math.random() < 0.5 ? pair[0] : pair[1];
+    return moveCollaborationNameToIndex(firstName, clickedIdx);
+}
+
+function prepareSecondCollaborationPick(clickedIdx) {
+    const board = state.collaborationBoard || [];
+    const firstIdx = state.collaborationFlipped[0];
+    const firstName = board[firstIdx];
+    const pair = state.collaborationPendingPair;
+
+    if (!Array.isArray(pair) || pair.length !== 2 || !firstName) {
+        return getBalancedSecondCollaborationIndex(firstIdx, clickedIdx);
+    }
+
+    const secondName = pair[0] === firstName ? pair[1] : pair[0];
+    if (!secondName || secondName === firstName) {
+        return getBalancedSecondCollaborationIndex(firstIdx, clickedIdx);
+    }
+
+    return moveCollaborationNameToIndex(secondName, clickedIdx);
+}
+
+function getBalancedFirstCollaborationIndex(clickedIdx) {
+    const board = state.collaborationBoard || [];
+    const candidates = board.map((name, index) => ({ name, index }));
+    const previousPeople = state.collaborationLastPair || [];
+    const freshCandidates = candidates.filter(item => !previousPeople.includes(item.name));
+    const usableCandidates = freshCandidates.length ? freshCandidates : candidates;
+    const minUsage = Math.min(...usableCandidates.map(item => getCollaborationUsage(item.name)));
+    const fairest = usableCandidates.filter(item => getCollaborationUsage(item.name) === minUsage);
+    return moveCollaborationCandidateToClickedIndex(clickedIdx, fairest);
+}
+
+function getBalancedSecondCollaborationIndex(firstIdx, clickedIdx) {
+    const board = state.collaborationBoard || [];
+    const firstName = board[firstIdx];
+    const clickedName = board[clickedIdx];
+    if (!firstName || !clickedName) return clickedIdx;
+
+    const candidates = board
+        .map((name, index) => ({ name, index }))
+        .filter(item => item.index !== firstIdx && item.name !== firstName);
+
+    if (!candidates.length) return clickedIdx;
+
+    const previousPeople = state.collaborationLastPair || [];
+    const scoredCandidates = candidates.map(item => {
+        const pair = [firstName, item.name];
+        const isLastPair = getCollaborationPairKey(pair) === (state.collaborationLastPairKey || '');
+        const score =
+            (isLastPair ? 10000 : 0) +
+            (getCollaborationPairUsage(pair) * 100) +
+            (getCollaborationUsage(item.name) * 8) +
+            (previousPeople.includes(item.name) ? 2 : 0);
+
+        return { ...item, score };
+    });
+    const minScore = Math.min(...scoredCandidates.map(item => item.score));
+    const fairest = scoredCandidates.filter(item => item.score === minScore);
+    const clickedCandidate = fairest.find(item => item.index === clickedIdx);
+
+    return moveCollaborationCandidateToClickedIndex(clickedIdx, clickedCandidate ? [clickedCandidate] : fairest);
+}
+
+function moveCollaborationCandidateToClickedIndex(clickedIdx, candidates) {
+    if (!candidates.length) return clickedIdx;
+
+    const selected = candidates.find(item => item.index === clickedIdx) || candidates[Math.floor(Math.random() * candidates.length)];
+    if (selected.index !== clickedIdx) {
+        const board = state.collaborationBoard;
+        [board[clickedIdx], board[selected.index]] = [board[selected.index], board[clickedIdx]];
+    }
+
+    return clickedIdx;
+}
 
 function getWheelSlots() {
     let hasInstantTask = state.pool.some(c => normalizeCardType(c.cardType) === CARD_TYPE.instantTask);
@@ -1377,6 +1805,33 @@ function revealCard(idx) {
     renderResult();
 }
 
+function revealCollaborationTask(pair) {
+    const taskIndex = state.pool.findIndex(c => normalizeCardType(c.cardType) === CARD_TYPE.instantTask);
+    const sourceCard = taskIndex >= 0 ? state.pool.splice(taskIndex, 1)[0] : normalizeCards([...PACKS.collaboration])[Math.floor(Math.random() * PACKS.collaboration.length)];
+    const card = {
+        ...sourceCard,
+        assignees: pair
+    };
+
+    state.collaborationUsage = state.collaborationUsage || {};
+    state.collaborationPairUsage = state.collaborationPairUsage || {};
+    pair.forEach(name => {
+        state.collaborationUsage[name] = getCollaborationUsage(name) + 1;
+    });
+    state.collaborationLastPairKey = getCollaborationPairKey(pair);
+    state.collaborationPairUsage[state.collaborationLastPairKey] = getCollaborationPairUsage(pair) + 1;
+    state.collaborationLastPair = [...pair];
+    state.collaborationRemainingParticipants = shuffleItems(state.collaborationParticipants || []);
+    state.collaborationBoard = [];
+    state.collaborationFlipped = [];
+    state.collaborationPendingPair = null;
+    state.pexesoResult = null;
+    state.history.push(card);
+    state.historyIndex = state.history.length - 1;
+    state.answered++;
+    renderResult();
+}
+
 function getDonationConfig(card) {
     const cardType = normalizeCardType(card?.cardType || card?.[String.fromCharCode(116)]);
     const isPexesoInstantTask = state.mode === 'pexeso' && cardType === CARD_TYPE.instantTask;
@@ -1424,11 +1879,19 @@ function renderResult() {
     const inspirationBtn = document.getElementById('inspiration-btn');
     const inspirationStage = document.getElementById('inspiration-stage');
 
-    // Always keep the purple type label (e.g. "OKAMŽITÁ ÚLOHA")
+    const hasCollaborationPair = isCollaborationPexeso() && card.assignees?.length === 2;
     resTypeEl.innerText = I18N[state.lang][card.cardType];
     resTypeEl.style.color = '';
+    resTypeEl.style.display = 'inline-flex';
 
-    if (state.mode === 'pexeso' && state.pexesoResult) {
+    if (hasCollaborationPair) {
+        resGeeEl.innerText = i18nText('collaborationPairBanner', {
+            first: card.assignees[0],
+            second: card.assignees[1]
+        });
+        resGeeEl.classList.add('banner');
+        resGeeEl.classList.add('collab-pair-banner');
+    } else if (state.mode === 'pexeso' && state.pexesoResult) {
         const isMatch = state.pexesoResult === 'match';
         const pMsg = isMatch
             ? I18N[state.lang].pexesoMatchBanner
@@ -1439,6 +1902,7 @@ function renderResult() {
     } else {
         resGeeEl.innerText = "";
         resGeeEl.classList.remove('banner');
+        resGeeEl.classList.remove('collab-pair-banner');
         resGeeEl.style.color = '';
     }
 
@@ -1447,8 +1911,7 @@ function renderResult() {
     inspirationBtn.classList.toggle('is-hidden-display', topics.length === 0);
     inspirationBtn.title = I18N[state.lang].inspirationButton;
     inspirationBtn.setAttribute('aria-label', I18N[state.lang].inspirationButton);
-    inspirationStage.className = 'inspiration-stage is-hidden-display';
-    inspirationStage.innerHTML = '';
+    renderInspirationStage(card, inspirationStage, topics);
 
     // Sticker logic
     const stickerCont = document.getElementById('sticker-container');
@@ -1492,17 +1955,34 @@ function showInspirationIdea() {
     if (!topics.length) return;
 
     const stage = document.getElementById('inspiration-stage');
-    const previous = Number(stage.dataset.topicIndex || -1);
+    const previous = Number(card.inspirationTopicIndex ?? stage.dataset.topicIndex ?? -1);
     let next = Math.floor(Math.random() * topics.length);
     if (topics.length > 1 && next === previous) next = (next + 1) % topics.length;
-    stage.dataset.topicIndex = String(next);
+    card.inspirationTopicIndex = next;
+    renderInspirationStage(card, stage, topics);
+    saveCurrentState();
+}
+
+function renderInspirationStage(card, stage, topics = getCardTopics(card)) {
+    const topicIndex = Number(card?.inspirationTopicIndex);
+
+    if (!stage || !topics.length || !Number.isInteger(topicIndex) || topicIndex < 0 || topicIndex >= topics.length) {
+        if (stage) {
+            stage.className = 'inspiration-stage is-hidden-display';
+            stage.innerHTML = '';
+            delete stage.dataset.topicIndex;
+        }
+        return;
+    }
+
+    stage.dataset.topicIndex = String(topicIndex);
     stage.className = 'inspiration-stage';
     stage.innerHTML = `
         <div class="magic-hat" aria-hidden="true">
             <div class="magic-hat-top"></div>
             <div class="magic-hat-brim"></div>
         </div>
-        <div class="idea-paper">${escapeHtml(topics[next])}</div>
+        <div class="idea-paper">${escapeHtml(topics[topicIndex])}</div>
     `;
 }
 
@@ -1632,6 +2112,37 @@ function editHistoryNote(key) {
         onConfirm: (newNote) => {
             data.note = newNote;
             localStorage.setItem(key, JSON.stringify(data));
+            refreshHistoryViews();
+        }
+    });
+}
+
+function editHistoryParticipants(key) {
+    closeAllMenus();
+    const data = getSessionData(key);
+    const names = (data.collaborationParticipants || []).join('\n');
+
+    showModal({
+        title: I18N[state.lang].editParticipants,
+        customHtml: `
+            <p class="modal-desc" style="display:block; margin-bottom: 12px;">${escapeHtml(I18N[state.lang].participantsEditDesc)}</p>
+            <textarea id="history-participants-input" class="modal-input modal-textarea">${escapeHtml(names)}</textarea>
+        `,
+        onConfirm: () => {
+            const input = document.getElementById('history-participants-input');
+            const uniqueNames = normalizeCollaborationParticipantNames(input?.value || '');
+            updateCollaborationParticipantsForState(data, uniqueNames, { resetStats: false });
+            localStorage.setItem(key, JSON.stringify(data));
+
+            if (state.sessionId === key) {
+                state = normalizeSessionData(data);
+                saveCurrentState();
+                if (state.screen === 'game') {
+                    updateStats();
+                    renderGameView();
+                }
+            }
+
             refreshHistoryViews();
         }
     });

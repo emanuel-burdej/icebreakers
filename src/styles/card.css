@@ -662,6 +662,11 @@ body[data-theme="dark"] .card-color-swatch {
     background: transparent;
 }
 
+.geegee.banner.collab-pair-banner {
+    color: var(--text);
+    opacity: 0.86;
+}
+
 .result-card[data-card-type="question"] .type-label {
     color: #60a5fa;
 }
@@ -830,4 +835,130 @@ body[data-theme="dark"] .card-color-swatch {
     pointer-events: none;
 
 
+}
+
+.collab-setup {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+.collab-setup-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+}
+
+.collab-setup-desc {
+    color: var(--text-dim);
+    font-size: 0.88rem;
+    line-height: 1.5;
+    margin-bottom: 16px;
+}
+
+.collab-participants-input {
+    width: 100%;
+    min-height: 180px;
+    resize: vertical;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface-ghost);
+    color: var(--text);
+    padding: 14px;
+    font: inherit;
+    line-height: 1.45;
+    outline: none;
+}
+
+.collab-participants-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.14);
+}
+
+.collab-continue-btn {
+    margin-top: 14px;
+}
+
+.collab-board-wrap {
+    width: min(100%, 520px);
+    margin: 0 auto;
+}
+
+.collab-board-help {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.82rem;
+    line-height: 1.45;
+    margin-bottom: 16px;
+}
+
+.collab-board {
+    display: grid;
+    gap: 10px;
+    justify-content: center;
+}
+
+.collab-name-card {
+    aspect-ratio: 1 / 1;
+    width: 100%;
+    height: auto;
+    min-width: 0;
+    min-height: 0;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--glass-bg);
+    color: var(--text);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    font: inherit;
+    font-size: 2rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    transition: transform 0.22s ease, border-color 0.22s ease, background 0.22s ease;
+}
+
+.collab-name-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--primary);
+}
+
+.collab-name-card.is-flipped {
+    background: var(--primary);
+    color: white;
+    font-size: clamp(0.72rem, 2.5vw, 1rem);
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+}
+
+.collab-finished {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-dim);
+}
+
+.collab-finished h3 {
+    color: var(--text);
+    margin-bottom: 10px;
+}
+
+.collab-leftover {
+    margin-top: 12px;
+    font-size: 0.88rem;
+}
+
+@media (max-width: 420px) {
+    .collab-setup {
+        padding: 20px 16px;
+    }
+
+    .collab-board {
+        gap: 8px;
+    }
+
+    .collab-name-card {
+        font-size: 1.7rem;
+    }
 }
