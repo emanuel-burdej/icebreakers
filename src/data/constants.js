@@ -12,6 +12,11 @@ const HAVKACI_WHEEL_POINTER = `<svg viewBox="0 0 36 36" xmlns="http://www.w3.org
 const APP_STYLE_CONFIG = {
     normal: {
         orgName: 'Prešovskí havkáči',
+        orgNames: {
+            sk: 'Prešovskí havkáči',
+            cz: 'Svoboda zvířat',
+            en: 'World Wildlife Fund (WWF)'
+        },
         logoUrl: HAVKACI_LOGO_URL,
         wheelPointer: HAVKACI_WHEEL_POINTER,
         cardStyles: [
@@ -29,6 +34,11 @@ const APP_STYLE_CONFIG = {
     },
     unicorn: {
         orgName: 'GeeGee',
+        orgNames: {
+            sk: 'GeeGee',
+            cz: 'GeeGee',
+            en: 'GeeGee'
+        },
         logoUrl: GEEGEE_LOGO_URL,
         wheelPointer: '🦄',
         cardStyles: [

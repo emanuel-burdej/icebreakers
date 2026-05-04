@@ -125,6 +125,8 @@ body[data-theme="dark"] .card-color-swatch {
 
 .question-fan-wrap {
     margin-top: 18px;
+    max-width: 100%;
+    overflow-x: clip;
 }
 
 .question-fan-help {
@@ -136,8 +138,10 @@ body[data-theme="dark"] .card-color-swatch {
 
 .question-fan-shell {
     position: relative;
-    min-height: 360px;
-    overflow: visible;
+    min-height: 300px;
+    max-width: 100%;
+    overflow-x: clip;
+    overflow-y: visible;
 }
 
 .question-fan-stage {
@@ -262,6 +266,10 @@ body[data-theme="dark"] .card-color-swatch {
 .question-fan-card[data-rotate="-1"],
 .question-fan-card[data-rotate="1"] {
     --fan-rotate: 0deg;
+}
+
+.question-fan.is-auto-scrolling {
+    pointer-events: none;
 }
 
 .question-fan-stage.hint-swipe {
@@ -679,6 +687,58 @@ body[data-theme="dark"] .card-color-swatch {
     color: #fbbf24;
 }
 
+.previous-card-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 112px;
+    min-height: 40px;
+    margin: 8px 0 0;
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-dim);
+    font: inherit;
+    font-size: 0.88rem;
+    font-weight: 700;
+    box-sizing: border-box;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.previous-card-action:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.16);
+    color: var(--text);
+}
+
+.game-control-row {
+    display: flex;
+    align-items: stretch;
+    gap: 12px;
+    width: 100%;
+    margin-top: 12px;
+}
+
+.game-control-row .previous-card-action {
+    flex: 0 0 auto;
+    margin: 0;
+}
+
+.question-fan-wrap + .previous-card-action {
+    margin-top: 8px;
+}
+
+.game-primary-action {
+    flex: 1 1 auto;
+    min-height: 40px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    margin-top: 0;
+    box-shadow: none;
+}
+
 .result-donation-row {
     width: 100%;
     margin-top: auto;
@@ -743,6 +803,10 @@ body[data-theme="dark"] .card-color-swatch {
     .result-nav .btn {
         min-width: 104px;
         padding: 8px 12px;
+    }
+
+    .previous-card-action {
+        width: 104px;
     }
 }
 

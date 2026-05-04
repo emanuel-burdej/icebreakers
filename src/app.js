@@ -147,12 +147,14 @@ function normalizeSessionData(data) {
     return data;
 }
 const storedDonationAmounts = JSON.parse(localStorage.getItem('ib_donation_amounts') || '{}');
+const initialLang = localStorage.getItem('ib_lang') || 'cz';
+const initialAppStyle = normalizeAppStyle(localStorage.getItem('ib_app_style'));
 
 let state = {
-    lang: localStorage.getItem('ib_lang') || 'cz',
+    lang: initialLang,
     theme: localStorage.getItem('ib_theme') || 'dark',
-    appStyle: normalizeAppStyle(localStorage.getItem('ib_app_style')),
-    orgName: localStorage.getItem('ib_org_name') || APP_STYLE_CONFIG.normal.orgName,
+    appStyle: initialAppStyle,
+    orgName: localStorage.getItem('ib_org_name') || getDefaultOrgName(initialAppStyle, initialLang),
     donationMode: localStorage.getItem('ib_donation_mode') || 'all',
     donationAmounts: normalizeDonationAmounts(storedDonationAmounts),
     mode: null,
@@ -183,8 +185,8 @@ if (isLegacyDonationAmountDefaults(storedDonationAmounts)) {
 
 if (!localStorage.getItem('ib_app_style')) {
     localStorage.setItem('ib_app_style', state.appStyle);
-    if (!localStorage.getItem('ib_org_name') || localStorage.getItem('ib_org_name') === APP_STYLE_CONFIG.unicorn.orgName) {
-        state.orgName = APP_STYLE_CONFIG.normal.orgName;
+    if (!localStorage.getItem('ib_org_name') || isKnownDefaultOrgName(localStorage.getItem('ib_org_name'))) {
+        state.orgName = getDefaultOrgName(state.appStyle, state.lang);
         localStorage.setItem('ib_org_name', state.orgName);
     }
 } else if (localStorage.getItem('ib_app_style') !== state.appStyle) {
@@ -222,9 +224,11 @@ window.onload = () => {
     renderHomeHistory();
     document.getElementById('langSelect').value = state.lang;
     updateLang();
+    initializeAppRoute();
 };
 
 let activeModalConfig = null;
+let isApplyingRoute = false;
 
 const HEADER_ACTION_ICONS = {
     home: `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M9.5 20v-5h5v5"/></svg>`,
@@ -244,7 +248,8 @@ function setHeaderActionButton(id, iconKey, label, onClick) {
 
 function getOrgName() {
     const config = getAppStyleConfig();
-    return (localStorage.getItem('ib_org_name') || state.orgName || config.orgName).trim() || config.orgName;
+    const defaultOrgName = getDefaultOrgName(state.appStyle, state.lang);
+    return (localStorage.getItem('ib_org_name') || state.orgName || defaultOrgName || config.orgName).trim() || defaultOrgName;
 }
 
 function normalizeAppStyle(style) {
@@ -254,6 +259,30 @@ function normalizeAppStyle(style) {
 
 function getAppStyleConfig(style = state.appStyle) {
     return APP_STYLE_CONFIG[normalizeAppStyle(style)] || APP_STYLE_CONFIG.normal;
+}
+
+function getDefaultOrgName(style = state?.appStyle, lang = state?.lang) {
+    const config = getAppStyleConfig(style);
+    return config.orgNames?.[lang] || config.orgName || APP_STYLE_CONFIG.normal.orgName;
+}
+
+function getAllDefaultOrgNames() {
+    return Object.values(APP_STYLE_CONFIG)
+        .flatMap(config => [config.orgName, ...Object.values(config.orgNames || {})])
+        .filter(Boolean);
+}
+
+function isKnownDefaultOrgName(orgName) {
+    return getAllDefaultOrgNames().includes((orgName || '').trim());
+}
+
+function syncDefaultOrgName(options = {}) {
+    const storedOrgName = (localStorage.getItem('ib_org_name') || '').trim();
+    const shouldUpdate = options.force || !storedOrgName || isKnownDefaultOrgName(storedOrgName);
+    if (!shouldUpdate) return;
+
+    state.orgName = getDefaultOrgName(state.appStyle, state.lang);
+    localStorage.setItem('ib_org_name', state.orgName);
 }
 
 function getAppCardStyles() {
@@ -275,11 +304,7 @@ function applyAppStyle(style, options = {}) {
     localStorage.setItem('ib_app_style', nextStyle);
     document.body.dataset.appStyle = nextStyle;
 
-    if (shouldUpdateOrg) {
-        const orgName = getAppStyleConfig(nextStyle).orgName;
-        state.orgName = orgName;
-        localStorage.setItem('ib_org_name', orgName);
-    }
+    if (shouldUpdateOrg) syncDefaultOrgName({ force: true });
 }
 
 function applyTheme(theme) {
@@ -813,6 +838,61 @@ function getAvailableModes(packKey) {
     return packKey === 'collaboration' ? ['pexeso'] : ['quickQuestions', 'wheel', 'pickCards'];
 }
 
+function getRouteScreen() {
+    return (location.hash || '#start').replace('#', '') || 'start';
+}
+
+function setRouteScreen(id, replace = false) {
+    const nextHash = `#${id}`;
+    if (location.hash === nextHash) return;
+
+    if (replace) {
+        history.replaceState(null, '', nextHash);
+    } else {
+        history.pushState(null, '', nextHash);
+    }
+}
+
+function initializeAppRoute() {
+    if (!location.hash) {
+        setRouteScreen('start', true);
+    }
+
+    window.addEventListener('popstate', handleRouteChange);
+    window.addEventListener('hashchange', handleRouteChange);
+    handleRouteChange();
+}
+
+function handleRouteChange() {
+    const modal = document.getElementById('modal');
+    if (modal?.classList.contains('active')) {
+        closeModal();
+    }
+
+    document.getElementById('sidebar')?.classList.remove('active');
+    document.getElementById('sidebar-overlay')?.classList.remove('active');
+
+    const route = getRouteScreen();
+    const validRoutes = ['start', 'mode', 'game', 'settings', 'about', 'history'];
+    const target = validRoutes.includes(route) ? route : 'start';
+
+    if ((target === 'mode' || target === 'game') && !state.sessionId) {
+        setRouteScreen('start', true);
+        return;
+    }
+
+    if (target === 'game' && !state.mode) {
+        setRouteScreen('mode', true);
+        return;
+    }
+
+    if (target === 'history') renderHistoryList();
+
+    isApplyingRoute = true;
+    showScreen(target, 'back', { updateRoute: false });
+    isApplyingRoute = false;
+}
+
 function renderModeSelection() {
     setHeaderActionButton('mode-left-btn', 'home', I18N[state.lang].navHome, goHome);
 
@@ -848,7 +928,12 @@ function renderModeSelection() {
     });
 }
 
-function showScreen(id, direction = 'forward') {
+function showScreen(id, direction = 'forward', options = {}) {
+    const shouldUpdateRoute = options.updateRoute !== false && !isApplyingRoute;
+    if (shouldUpdateRoute) {
+        setRouteScreen(id, options.replaceRoute);
+    }
+
     if (id === 'mode') {
         renderModeSelection();
     }
@@ -915,6 +1000,7 @@ function toggleSidebar() {
 function updateLang() {
     state.lang = document.getElementById('langSelect').value;
     localStorage.setItem('ib_lang', state.lang);
+    syncDefaultOrgName();
 
     // Preklad statických prvkov rozhrania
     document.querySelectorAll('[data-i18n]').forEach(el => el.innerText = I18N[state.lang][el.dataset.i18n]);
@@ -1108,11 +1194,13 @@ function renderGameView(options = {}) {
 
     if (state.mode === 'quickQuestions' && remainingQuestions === 0) {
         area.innerHTML = `<div style="text-align:center; padding: 40px 20px; color: var(--text-dim);"><h3 style="margin-bottom:10px;">${I18N[state.lang].congratsTitle}</h3><p>${I18N[state.lang].congratsDesc}</p></div>`;
+        renderPreviousCardAction(area);
         return;
     }
 
     if (state.pool.length === 0) {
         area.innerHTML = `<div style="text-align:center; padding: 40px 20px; color: var(--text-dim);"><h3 style="margin-bottom:10px;">${I18N[state.lang].congratsTitle}</h3><p>${I18N[state.lang].congratsDesc}</p></div>`;
+        renderPreviousCardAction(area);
         return;
     }
 
@@ -1199,7 +1287,9 @@ function renderGameView(options = {}) {
                             </g>
                         </svg>
                     </div>
-                    <button id="spin-btn" class="btn" onclick="spinWheel()">${I18N[state.lang].spin}</button>`;
+                    <div class="game-control-row">
+                        <button id="spin-btn" class="btn game-primary-action" onclick="spinWheel()">${I18N[state.lang].spin}</button>
+                    </div>`;
     } else if (state.mode === 'quickQuestions') {
         const questions = (state.pool || [])
             .map((card, index) => ({ card, index }))
@@ -1207,14 +1297,11 @@ function renderGameView(options = {}) {
 
         if (!questions.length) {
             area.innerHTML = `<div style="text-align:center; padding: 40px 20px; color: var(--text-dim);"><h3 style="margin-bottom:10px;">${I18N[state.lang].congratsTitle}</h3><p>${I18N[state.lang].congratsDesc}</p></div>`;
+            renderPreviousCardAction(area);
             return;
         }
 
-        state.quickQCursor = Number.isFinite(state.quickQCursor)
-            ? ((state.quickQCursor % questions.length) + questions.length) % questions.length
-            : 0;
-
-        const cardMarks = getQuestionCardMarks();
+        state.quickQCursor = Math.floor(Math.random() * questions.length);
 
         const cardsHtml = questions.map((item, order) => `
     <div class="question-fan-card"
@@ -1222,8 +1309,6 @@ function renderGameView(options = {}) {
         data-question-order="${order}"
         data-rotate="${order % 2 === 0 ? '-1' : '1'}"
         onclick="selectQuickQuestion(${item.index}, ${order})">
-
-        <div class="question-card-mark">${cardMarks[order % cardMarks.length]}</div>
 
         <div class="question-fan-card-inner">
             <div class="question-fan-badge">${I18N[state.lang].question}</div>
@@ -1310,6 +1395,8 @@ function renderGameView(options = {}) {
         html += '</div>';
         area.innerHTML = html;
     }
+
+    renderPreviousCardAction(area);
 }
 
 function renderCollaborationPexeso(area) {
@@ -1322,6 +1409,7 @@ function renderCollaborationPexeso(area) {
 
     if (!state.pool || state.pool.length === 0) {
         area.innerHTML = `<div class="collab-finished"><h3>${I18N[state.lang].congratsTitle}</h3><p>${I18N[state.lang].congratsDesc}</p></div>`;
+        renderPreviousCardAction(area);
         return;
     }
 
@@ -1352,6 +1440,31 @@ function renderCollaborationPexeso(area) {
         </div>
     `;
     area.innerHTML = html;
+    renderPreviousCardAction(area);
+}
+
+function renderPreviousCardAction(area) {
+    if (!area || !state.history || state.history.length === 0) return;
+
+    const action = document.createElement('button');
+    action.type = 'button';
+    action.className = 'previous-card-action';
+    action.onclick = showPreviousCardFromGame;
+    action.innerText = `← ${I18N[state.lang].back}`;
+
+    const controls = area.querySelector('.game-control-row');
+    if (controls) {
+        controls.prepend(action);
+        return;
+    }
+
+    area.appendChild(action);
+}
+
+function showPreviousCardFromGame() {
+    if (!state.history || state.history.length === 0) return;
+    state.historyIndex = state.history.length - 1;
+    renderResult();
 }
 
 function renderCollaborationParticipantsEditor(area, names = []) {
@@ -1495,6 +1608,7 @@ function setupQuickQuestionFan() {
 
     state.quickQCursor = ((state.quickQCursor % total) + total) % total;
     updateQuickQuestionFanLayout();
+    playQuickQuestionShuffle();
 
     let pointerStartX = null;
     let lastStepX = null;
@@ -1564,6 +1678,35 @@ function setupQuickQuestionFan() {
         }, 900);
     }, 80);
 }
+
+function playQuickQuestionShuffle() {
+    const fan = document.getElementById('question-fan');
+    if (!fan) return;
+
+    const total = Number(fan.dataset.total || 0);
+    if (total < 2) return;
+
+    fan.classList.add('is-auto-scrolling');
+    const steps = Math.min(3, total - 1);
+    let completed = 0;
+
+    const scrollStep = () => {
+        stepQuickQuestionFan(1);
+        completed++;
+
+        if (completed < steps) {
+            setTimeout(scrollStep, 95);
+            return;
+        }
+
+        setTimeout(() => {
+            fan.classList.remove('is-auto-scrolling');
+        }, 120);
+    };
+
+    requestAnimationFrame(scrollStep);
+}
+
 window.stepQuickQuestionFan = function (direction) {
     const fan = document.getElementById('question-fan');
     if (!fan) return;
@@ -1909,6 +2052,26 @@ function getDonationConfig(card) {
     return config;
 }
 
+function getCardDetailTypeLabel(card) {
+    const cardType = normalizeCardType(card?.cardType);
+    const hasCollaborationPair = isCollaborationPexeso() && card?.assignees?.length === 2;
+
+    if (hasCollaborationPair && cardType === CARD_TYPE.instantTask) {
+        return i18nText('collaborationInstantTaskDetail', {
+            participants: card.assignees.join(', ')
+        });
+    }
+
+    const detailKeyByType = {
+        [CARD_TYPE.question]: 'questionDetail',
+        [CARD_TYPE.instantTask]: 'instantTaskDetail',
+        [CARD_TYPE.longTermChallenge]: 'longTermChallengeDetail'
+    };
+    const detailKey = detailKeyByType[cardType];
+
+    return detailKey ? I18N[state.lang][detailKey] : I18N[state.lang][cardType];
+}
+
 function renderResult() {
     const card = state.history[state.historyIndex];
     document.getElementById('game-area').style.display = 'none';
@@ -1924,17 +2087,15 @@ function renderResult() {
     const inspirationStage = document.getElementById('inspiration-stage');
 
     const hasCollaborationPair = isCollaborationPexeso() && card.assignees?.length === 2;
-    resTypeEl.innerText = I18N[state.lang][card.cardType];
+    resTypeEl.innerText = getCardDetailTypeLabel(card);
     resTypeEl.style.color = '';
     resTypeEl.style.display = 'inline-flex';
 
     if (hasCollaborationPair) {
-        resGeeEl.innerText = i18nText('collaborationPairBanner', {
-            first: card.assignees[0],
-            second: card.assignees[1]
-        });
-        resGeeEl.classList.add('banner');
-        resGeeEl.classList.add('collab-pair-banner');
+        resGeeEl.innerText = "";
+        resGeeEl.classList.remove('banner');
+        resGeeEl.classList.remove('collab-pair-banner');
+        resGeeEl.style.color = '';
     } else if (state.mode === 'pexeso' && state.pexesoResult) {
         const isMatch = state.pexesoResult === 'match';
         const pMsg = isMatch
@@ -2090,7 +2251,9 @@ function nextQuickQuestion() {
 }
 
 function goHome() {
-    location.reload();
+    document.getElementById('sidebar')?.classList.remove('active');
+    document.getElementById('sidebar-overlay')?.classList.remove('active');
+    showScreen('start', 'back', { replaceRoute: true });
 }
 
 function showHistory() {
@@ -2289,7 +2452,7 @@ function editOrgName() {
         value: getOrgName(),
         desc: I18N[state.lang].settingsOrgDesc,
         onConfirm: (newOrgName) => {
-            const cleaned = (newOrgName || '').trim() || getAppStyleConfig().orgName;
+            const cleaned = (newOrgName || '').trim() || getDefaultOrgName(state.appStyle, state.lang);
             state.orgName = cleaned;
             localStorage.setItem('ib_org_name', cleaned);
             renderSettingsView();
@@ -2376,7 +2539,7 @@ function endSession() {
             localStorage.setItem(state.sessionId, JSON.stringify(finalData));
             localStorage.removeItem('ib_current_session');
             state.sessionId = null;
-            showScreen('start', 'back');
+            showScreen('start', 'back', { replaceRoute: true });
         }
     });
 }
