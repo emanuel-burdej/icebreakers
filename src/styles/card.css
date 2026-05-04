@@ -361,15 +361,39 @@ body[data-theme="dark"] .card-color-swatch {
     right: -10px;
     width: 58px;
     height: 58px;
-    background: #fff url("https://uuapp.plus4u.net/uu-webkit-maing02/46f70125a73742878c6c853db30cfaaf/getProductLogo?type=1x1&slot=prod2") no-repeat center;
-    background-size: 78%;
+    background: #fff;
     border-radius: 50%;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.28), inset 0 0 0 3px #ec4899;
     border: 2px solid white;
+    padding: 0;
     transform: rotate(15deg);
     z-index: 5;
     animation: stickerPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     cursor: pointer;
+    overflow: hidden;
+}
+
+.geegee-sticker-logo {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.geegee-sticker-fallback {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    color: #0f172a;
+    font-size: 0.9rem;
+    font-weight: 900;
+    letter-spacing: 0.4px;
+}
+
+.geegee-sticker-fallback.is-visible {
+    display: flex;
 }
 
 .card-item-image,

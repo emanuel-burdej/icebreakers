@@ -266,6 +266,38 @@ function getDefaultOrgName(style = state?.appStyle, lang = state?.lang) {
     return config.orgNames?.[lang] || config.orgName || APP_STYLE_CONFIG.normal.orgName;
 }
 
+function getDefaultOrgLogoUrl(style = state?.appStyle, lang = state?.lang) {
+    const config = getAppStyleConfig(style);
+    return config.logoUrls?.[lang] || config.logoUrl || APP_STYLE_CONFIG.normal.logoUrl;
+}
+
+function getOrgLogoUrl(orgName = getOrgName()) {
+    const cleanOrgName = (orgName || '').trim();
+    const knownLogo = Object.values(APP_STYLE_CONFIG)
+        .flatMap(config => Object.entries(config.orgNames || {}).map(([lang, name]) => ({
+            name,
+            logoUrl: config.logoUrls?.[lang] || config.logoUrl
+        })))
+        .find(item => item.name === cleanOrgName)?.logoUrl;
+
+    return knownLogo || '';
+}
+
+function getOrgStickerText(orgName = getOrgName()) {
+    const cleanOrgName = (orgName || '').trim();
+    if (cleanOrgName === 'World Wildlife Fund (WWF)') return 'WWF';
+    if (cleanOrgName === 'Prešovskí havkáči') return 'PH';
+    if (cleanOrgName === 'Svoboda zvířat') return 'SZ';
+    if (cleanOrgName === 'GeeGee') return 'GG';
+
+    return cleanOrgName
+        .split(/\s+/)
+        .map(part => part[0])
+        .join('')
+        .slice(0, 3)
+        .toUpperCase() || 'ORG';
+}
+
 function getAllDefaultOrgNames() {
     return Object.values(APP_STYLE_CONFIG)
         .flatMap(config => [config.orgName, ...Object.values(config.orgNames || {})])
@@ -2123,8 +2155,14 @@ function renderResult() {
     const orgName = getOrgName();
     const donationsEnabled = isDonationEnabledForCard(card);
     if (!donationsEnabled && card.isPinned) card.isPinned = false;
-    const logoUrl = getAppStyleConfig().logoUrl;
-    stickerCont.innerHTML = donationsEnabled && card.isPinned ? `<div class="geegee-sticker" onclick="togglePin()" style="background-image: url('${escapeHtml(logoUrl)}')">${orgName}</div>` : '';
+    const logoUrl = getOrgLogoUrl(orgName);
+    const stickerText = getOrgStickerText(orgName);
+    stickerCont.innerHTML = donationsEnabled && card.isPinned ? `
+        <button class="geegee-sticker" onclick="togglePin()" type="button" aria-label="${escapeHtml(orgName)}">
+            ${logoUrl ? `<img class="geegee-sticker-logo" src="${escapeHtml(logoUrl)}" alt="" onerror="this.classList.add('is-hidden-display'); this.nextElementSibling.classList.add('is-visible');">` : ''}
+            <span class="geegee-sticker-fallback ${logoUrl ? '' : 'is-visible'}">${escapeHtml(stickerText)}</span>
+        </button>
+    ` : '';
 
     // Pin button logic
     const pinBtn = document.getElementById('pin-btn-el');
