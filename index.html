@@ -8,8 +8,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="src/styles/global.css?v=20260504">
-    <link rel="stylesheet" href="src/styles/packs.css?v=20260504">
     <link rel="stylesheet" href="src/styles/card.css?v=20260504">
+    <link rel="stylesheet" href="src/styles/packs.css?v=20260504">
+<link rel="stylesheet" href="/index.css">
 </head>
 
 <body>
@@ -120,12 +121,16 @@
                 <span id="res-type" class="type-label"></span>
                 <p id="res-text" class="main-text"></p>
                 <div id="inspiration-stage" class="inspiration-stage is-hidden-display" aria-live="polite"></div>
+
                 <div class="result-donation-row">
                     <button id="pin-btn-el" class="pin-btn" onclick="togglePin()">📌</button>
                 </div>
                 <div class="result-nav">
                     <button id="btn-prev" class="btn btn-ghost is-hidden" onclick="prevRound()"
                         data-i18n="prev">← Predchádzajúca</button>
+                    <button id="ps-reveal-btn" class="btn ps-reveal-btn" style="display: none;" onclick="revealFullAnswer()">
+                        <span data-i18n="reveal">Odhaliť</span>
+                    </button>
                     <button id="btn-next" class="btn btn-next" onclick="nextRound()" data-i18n="next">Ďalej →</button>
                 </div>
             </div>
@@ -306,6 +311,7 @@
     <script src="src/data/packs.js?v=20260504"></script>
     <script src="src/data/constants.js?v=20260504"></script>
     <script src="src/app.js?v=20260504"></script>
+<script type="module" src="/index.tsx"></script>
 </body>
 
 </html>

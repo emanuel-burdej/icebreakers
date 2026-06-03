@@ -106,6 +106,160 @@ const COLLABORATION_PACK = [
     { cardType: 'instantTask', sk: "Postavte vežu z 5 rôznych vecí (nemôžu sa opakovať), ktoré máte pri sebe.", cz: "Postavte věž z 5 různých věcí (nesmí se opakovat), které máte u sebe.", en: "Build a tower using 5 different items you have with you (no duplicates allowed)." }
 ];
 
-const PACKS = { basic: BASIC_PACK, advanced: ADVANCED_PACK, collaboration: COLLABORATION_PACK };
+const PHILOSOPHERS_STONE_PACK = [
+    // Flags topic
+    {
+        cardType: 'philosophersStone',
+        topic: 'flags',
+        flag: '🇸🇰',
+        answers: { sk: "SLOVENSKO", cz: "SLOVENSKO", en: "SLOVAKIA" }
+    },
+    {
+        cardType: 'philosophersStone',
+        topic: 'flags',
+        flag: '🇨🇿',
+        answers: { sk: "ČESKO", cz: "ČESKO", en: "CZECHIA" }
+    },
+    {
+        cardType: 'philosophersStone',
+        topic: 'flags',
+        flag: '🇫🇷',
+        answers: { sk: "FRANCÚZSKO", cz: "FRANCIE", en: "FRANCE" }
+    },
+    {
+        cardType: 'philosophersStone',
+        topic: 'flags',
+        flag: '🇮🇹',
+        answers: { sk: "TALIANSKO", cz: "ITALIE", en: "ITALY" }
+    },
+    {
+        cardType: 'philosophersStone',
+        topic: 'flags',
+        flag: '🇪🇸',
+        answers: { sk: "ŠPANIELSKO", cz: "ŠPANĚLSKO", en: "SPAIN" }
+    },
+    {
+        cardType: 'philosophersStone',
+        topic: 'flags',
+        flag: '🇩🇪',
+        answers: { sk: "NEMECKO", cz: "NĚMECKO", en: "GERMANY" }
+    },
+    {
+        cardType: 'philosophersStone',
+        topic: 'flags',
+        flag: '🇯🇵',
+        answers: { sk: "JAPONSKO", cz: "JAPONSKO", en: "JAPAN" }
+    },
+    {
+        cardType: 'philosophersStone',
+        topic: 'flags',
+        flag: '🇬🇧',
+        answers: { sk: "ANGLICKO", cz: "ANGLIE", en: "ENGLAND" }
+    },
+    {
+        cardType: 'philosophersStone',
+        topic: 'flags',
+        flag: '🇨🇦',
+        answers: { sk: "KANADA", cz: "KANADA", en: "CANADA" }
+    },
+    {
+        cardType: 'philosophersStone',
+        topic: 'flags',
+        flag: '🇦🇺',
+        answers: { sk: "AUSTRÁLIA", cz: "AUSTRÁLIE", en: "AUSTRALIA" }
+    },
+
+    // Proverbs topic
+    {
+        cardType: 'philosophersStone',
+        topic: 'proverbs',
+        proverb: "Amor vincit {word}",
+        guessWord: "OMNIA",
+        translations: {
+            sk: "Láska všetko premáha",
+            cz: "Láska vše přemáhá",
+            en: "Love conquers all"
+        }
+    },
+    {
+        cardType: 'philosophersStone',
+        topic: 'proverbs',
+        proverb: "Carpe {word}",
+        guessWord: "DIEM",
+        translations: {
+            sk: "Užívaj dňa",
+            cz: "Užívej dne",
+            en: "Seize the day"
+        }
+    },
+    {
+        cardType: 'philosophersStone',
+        topic: 'proverbs',
+        proverb: "{word} mori",
+        guessWord: "MEMENTO",
+        translations: {
+            sk: "Pamätaj na smrť",
+            cz: "Pamatuj na smrt",
+            en: "Remember that you must die"
+        }
+    },
+    {
+        cardType: 'philosophersStone',
+        topic: 'proverbs',
+        proverb: "Veni, vidi, {word}",
+        guessWord: "VICI",
+        translations: {
+            sk: "Prišiel som, videl som, zvíťazil som",
+            cz: "Přišel jsem, viděl jsem, zvítězil jsem",
+            en: "I came, I saw, I conquered"
+        }
+    },
+    {
+        cardType: 'philosophersStone',
+        topic: 'proverbs',
+        proverb: "Alea iacta {word}",
+        guessWord: "EST",
+        translations: {
+            sk: "Kocky sú hodené",
+            cz: "Kostky jsou vrženy",
+            en: "The die is cast"
+        }
+    },
+    {
+        cardType: 'philosophersStone',
+        topic: 'proverbs',
+        proverb: "In vino {word}",
+        guessWord: "VERITAS",
+        translations: {
+            sk: "Vo víne je pravda",
+            cz: "Ve víně je pravda",
+            en: "In wine there is truth"
+        }
+    },
+    {
+        cardType: 'philosophersStone',
+        topic: 'proverbs',
+        proverb: "Per aspera ad {word}",
+        guessWord: "ASTRA",
+        translations: {
+            sk: "Cez prekážky ku hviezdam",
+            cz: "Přes překážky ke hvězdám",
+            en: "Through hardships to the stars"
+        }
+    },
+    {
+        cardType: 'philosophersStone',
+        topic: 'proverbs',
+        proverb: "Persona non {word}",
+        guessWord: "GRATA",
+        translations: {
+            sk: "Nežiaduca osoba",
+            cz: "Nežádoucí osoba",
+            en: "An unwelcome person"
+        }
+    }
+];
+
+const PACKS = { basic: BASIC_PACK, advanced: ADVANCED_PACK, collaboration: COLLABORATION_PACK, philosophersStone: PHILOSOPHERS_STONE_PACK };
 
 

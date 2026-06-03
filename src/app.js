@@ -46,7 +46,8 @@ const MODE_DESC_I18N_KEY = {
 const PACK_I18N_KEY = {
     basic: 'pkgBasic',
     advanced: 'pkgAdvanced',
-    collaboration: 'pkgCollaboration'
+    collaboration: 'pkgCollaboration',
+    philosophersStone: 'pkgPhilosophersStone'
 };
 
 const DONATION_MODE_I18N_KEY = {
@@ -932,6 +933,49 @@ function renderModeSelection() {
     if (!container) return;
     container.innerHTML = "";
 
+    const headerTitle = document.querySelector('#screen-mode .header-mode-progress');
+    if (headerTitle) {
+        if (state.packKey === 'philosophersStone') {
+            headerTitle.innerText = I18N[state.lang].selectTopic || "Výber témy";
+        } else {
+            headerTitle.innerText = I18N[state.lang].selectMode;
+        }
+    }
+
+    if (state.packKey === 'philosophersStone') {
+        const topics = [
+            { key: 'flags', title: { sk: 'Vlajky krajín', cz: 'Vlajky zemí', en: 'Country Flags' }, desc: { sk: 'Hádajte krajinu podľa jej vlajky.', cz: 'Hádejte zemi podle její vlajky.', en: 'Guess the country by its flag.' }, icon: '🏳️' },
+            { key: 'proverbs', title: { sk: 'Latinské príslovia', cz: 'Latinská přísloví', en: 'Latin Proverbs' }, desc: { sk: 'Doplňte chýbajúce slovo v slávnych výrokoch.', cz: 'Doplňte chybějící slovo ve slavných výrocích.', en: 'Fill in the missing word in famous proverbs.' }, icon: '📜' }
+        ];
+
+        topics.forEach(t => {
+            const name = t.title[state.lang] || t.title.en;
+            const desc = t.desc[state.lang] || t.desc.en;
+            const div = document.createElement('div');
+            div.className = 'glass';
+            div.style = 'padding: 20px; margin-bottom: 12px; cursor: pointer; display: flex; align-items: center; gap: 18px;';
+            div.onclick = () => selectPhilosophersStoneTopic(t.key);
+            div.innerHTML = `
+                <div style="font-size: 2rem; flex-shrink: 0; width: 32px; display: flex; align-items: center; justify-content: center;">${t.icon}</div>
+                <div style="flex-grow: 1;">
+                    <div style="color: var(--text); font-weight: 700; font-size: 1.1rem; margin-bottom: 4px;">
+                        ${name}
+                    </div>
+                    <div style="font-size: 0.75rem; opacity: 0.6; line-height: 1.4;">
+                        ${desc}
+                    </div>
+                </div>
+                <div style="background: var(--primary); width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); flex-shrink: 0;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M8 5v14l11-7z" stroke="none" />
+                    </svg>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+        return;
+    }
+
     const modes = getAvailableModes(state.packKey);
     modes.forEach(m => {
         const icon = ICONS[m].replace('width="22"', 'width="28"').replace('height="22"', 'height="28"');
@@ -1096,6 +1140,7 @@ function renderPacks() {
         questions.forEach(item => counts[normalizeCardType(item.cardType)]++);
 
         const name = I18N[state.lang][PACK_I18N_KEY[key]] || key;
+        /*
         let subParts = [];
         if (counts.question > 0) subParts.push(`${counts.question} ${I18N[state.lang].countQuestion}`);
         if (counts.instantTask > 0) subParts.push(`${counts.instantTask} ${I18N[state.lang].countInstantTask}`);
@@ -1108,6 +1153,37 @@ function renderPacks() {
             const icon = ICONS[m].replace('width="22"', 'width="14"').replace('height="22"', 'height="14"');
             return `<span style="display:inline-flex; align-items:center; gap:4px; vertical-align:middle;">${icon} ${I18N[state.lang][MODE_I18N_KEY[m]]}</span>`;
         }).join('<span style="opacity:0.2; margin:0 6px;">|</span>');
+        */
+
+        let sub = "";
+        let modeHtml = "";
+
+        if (key === 'philosophersStone') {
+            const countFlags = questions.filter(c => c.topic === 'flags').length;
+            const countProverbs = questions.filter(c => c.topic === 'proverbs').length;
+            if (state.lang === 'sk') {
+                sub = `${countFlags} vlajok krajín • ${countProverbs} latinských prísloví`;
+                modeHtml = `<span style="display:inline-flex; align-items:center; gap:4px; vertical-align:middle;">Vlajky krajín</span><span style="opacity:0.2; margin:0 6px;">|</span><span style="display:inline-flex; align-items:center; gap:4px; vertical-align:middle;">Latinské príslovia</span>`;
+            } else if (state.lang === 'cz') {
+                sub = `${countFlags} vlajek zemí • ${countProverbs} latinských přísloví`;
+                modeHtml = `<span style="display:inline-flex; align-items:center; gap:4px; vertical-align:middle;">Vlajky zemí</span><span style="opacity:0.2; margin:0 6px;">|</span><span style="display:inline-flex; align-items:center; gap:4px; vertical-align:middle;">Latinská přísloví</span>`;
+            } else {
+                sub = `${countFlags} country flags • ${countProverbs} Latin proverbs`;
+                modeHtml = `<span style="display:inline-flex; align-items:center; gap:4px; vertical-align:middle;">Country flags</span><span style="opacity:0.2; margin:0 6px;">|</span><span style="display:inline-flex; align-items:center; gap:4px; vertical-align:middle;">Latin proverbs</span>`;
+            }
+        } else {
+            let subParts = [];
+            if (counts.question > 0) subParts.push(`${counts.question} ${I18N[state.lang].countQuestion}`);
+            if (counts.instantTask > 0) subParts.push(`${counts.instantTask} ${I18N[state.lang].countInstantTask}`);
+            if (counts.longTermChallenge > 0) subParts.push(`${counts.longTermChallenge} ${I18N[state.lang].countLongTermChallenge}`);
+            sub = subParts.join(' • ');
+
+            const modeList = getAvailableModes(key);
+            modeHtml = modeList.map(m => {
+                const icon = ICONS[m].replace('width="22"', 'width="14"').replace('height="22"', 'height="14"');
+                return `<span style="display:inline-flex; align-items:center; gap:4px; vertical-align:middle;">${icon} ${I18N[state.lang][MODE_I18N_KEY[m]]}</span>`;
+            }).join('<span style="opacity:0.2; margin:0 6px;">|</span>');
+        }
 
         const div = document.createElement('div');
         div.className = 'glass';
@@ -1188,9 +1264,18 @@ function showNextQuestionCard() {
 }
 
 function updateStats() {
-    const packKey = (state.packKey || 'basic').toLowerCase().replace(' ', '_');
-    const packName = I18N[state.lang][PACK_I18N_KEY[packKey]] || state.packKey;
-    const modeName = I18N[state.lang][MODE_I18N_KEY[normalizeMode(state.mode)]];
+    const rawPackKey = state.packKey || 'basic';
+    const packKey = rawPackKey.toLowerCase().replace(' ', '_');
+    const packI18nKey = PACK_I18N_KEY[rawPackKey] || PACK_I18N_KEY[packKey];
+    const packName = (packI18nKey && I18N[state.lang][packI18nKey]) || state.packKey;
+
+    let modeName = "";
+    if (state.packKey === 'philosophersStone') {
+        const topicKey = state.selectedTopic === 'flags' ? 'topicFlags' : 'topicProverbs';
+        modeName = I18N[state.lang][topicKey] || state.selectedTopic;
+    } else {
+        modeName = I18N[state.lang][MODE_I18N_KEY[normalizeMode(state.mode)]] || state.mode;
+    }
     const total = isCollaborationPexeso()
         ? getCollaborationTotalPairs()
         : (state.mode === 'quickQuestions'
@@ -2088,6 +2173,10 @@ function getCardDetailTypeLabel(card) {
     const cardType = normalizeCardType(card?.cardType);
     const hasCollaborationPair = isCollaborationPexeso() && card?.assignees?.length === 2;
 
+    if (cardType === 'philosophersStone') {
+        return I18N[state.lang].pkgStatusPhilosophersStone || "Kameň mudrcov";
+    }
+
     if (hasCollaborationPair && cardType === CARD_TYPE.instantTask) {
         return i18nText('collaborationInstantTaskDetail', {
             participants: card.assignees.join(', ')
@@ -2143,11 +2232,69 @@ function renderResult() {
         resGeeEl.style.color = '';
     }
 
-    resTextEl.innerText = card[state.lang];
+    if (card.cardType === 'philosophersStone') {
+        const word = card.topic === 'flags' ? (card.answers[state.lang] || card.answers.en).toUpperCase() : card.guessWord.toUpperCase();
+        if (!card.revealedIndices) {
+            card.revealedIndices = [];
+        }
+        const lettersHtml = word.split('').map((char, idx) => {
+            if (char === ' ' || char === '-') {
+                return `<span class="masked-letter-separator" style="width: 15px; display: inline-block;">${char === '-' ? '-' : ''}</span>`;
+            }
+            const isRevealed = card.isFullRevealed || card.revealedIndices.includes(idx);
+            return `<span class="masked-letter ${isRevealed ? '' : 'hidden'}">${char}</span>`;
+        }).join('');
+
+        let customHtml = "";
+        if (card.topic === 'flags') {
+            customHtml = `
+                <div class="ps-flag-display" style="font-size: 6rem; text-align: center; margin: 15px 0;">${card.flag}</div>
+                <div class="masked-word-container">${lettersHtml}</div>
+            `;
+        } else {
+            const proverbParts = card.proverb.split('{word}');
+            customHtml = `
+                <div class="proverb-display-container" style="text-align: center; margin: 20px 0; font-family: 'Plus Jakarta Sans', sans-serif;">
+                    <p style="font-size: 1.5rem; font-weight: 600; line-height: 1.6; color: var(--text);">
+                        ${proverbParts[0]}
+                        <span style="display: inline-block; vertical-align: middle;">
+                            <span class="masked-word-container" style="margin: 0; display: inline-flex; gap: 4px;">${lettersHtml}</span>
+                        </span>
+                        ${proverbParts[1] || ''}
+                    </p>
+                    ${card.isFullRevealed ? `<p class="proverb-translation" style="font-style: italic; opacity: 0.8; font-size: 1.1rem; margin-top: 25px; transition: opacity 0.5s;">„${card.translations[state.lang] || card.translations.en}“</p>` : ''}
+                </div>
+            `;
+        }
+        resTextEl.innerHTML = customHtml;
+    } else {
+        resTextEl.innerText = card[state.lang] || '';
+    }
+
+    const revealBtn = document.getElementById('ps-reveal-btn');
+    if (revealBtn) {
+        if (card.cardType === 'philosophersStone') {
+            revealBtn.style.display = 'inline-flex';
+            revealBtn.disabled = card.isFullRevealed;
+            revealBtn.style.opacity = card.isFullRevealed ? '0.5' : '1';
+        } else {
+            revealBtn.style.display = 'none';
+        }
+    }
     const topics = getCardTopics(card);
-    inspirationBtn.classList.toggle('is-hidden-display', topics.length === 0);
-    inspirationBtn.title = I18N[state.lang].inspirationButton;
-    inspirationBtn.setAttribute('aria-label', I18N[state.lang].inspirationButton);
+    const isPS = card.cardType === 'philosophersStone';
+    const showWand = topics.length > 0 || isPS;
+    inspirationBtn.classList.toggle('is-hidden-display', !showWand);
+    if (isPS) {
+        inspirationBtn.title = I18N[state.lang].smartHat || "Múdry klobúk";
+    } else {
+        inspirationBtn.title = I18N[state.lang].inspirationButton;
+    }
+    if (isPS) {
+        inspirationBtn.setAttribute('aria-label', I18N[state.lang].smartHat || "Múdry klobúk");
+    } else {
+        inspirationBtn.setAttribute('aria-label', I18N[state.lang].inspirationButton);
+    }
     renderInspirationStage(card, inspirationStage, topics);
 
     // Sticker logic
@@ -2186,7 +2333,11 @@ function renderResult() {
     const btnNext = document.getElementById('btn-next');
     prevBtn.innerText = `← ${I18N[state.lang].prev}`;
     btnNext.innerText = `${I18N[state.lang].next} →`;
-    btnNext.onclick = state.mode === 'quickQuestions' ? nextQuickQuestion : nextRound;
+    if (state.mode === 'philosophersStone_play') {
+        btnNext.onclick = nextPhilosophersStoneRound;
+    } else {
+        btnNext.onclick = state.mode === 'quickQuestions' ? nextQuickQuestion : nextRound;
+    }
 
     updateStats();
     saveCurrentState();
@@ -2194,6 +2345,10 @@ function renderResult() {
 
 function showInspirationIdea() {
     const card = state.history[state.historyIndex];
+    if (card && card.cardType === 'philosophersStone') {
+        triggerSmartHat();
+        return;
+    }
     const topics = getCardTopics(card);
     if (!topics.length) return;
 
@@ -2254,6 +2409,82 @@ function togglePin() {
     }
 
     document.getElementById('noteInput').value = state.note;
+    saveCurrentState();
+    renderResult();
+}
+
+function selectPhilosophersStoneTopic(topicKey) {
+    state.selectedTopic = topicKey;
+    state.mode = 'philosophersStone_play';
+    state.pool = shuffleItems(normalizeCards([...PACKS.philosophersStone].filter(c => c.topic === topicKey)));
+    state.history = [];
+    state.historyIndex = -1;
+    state.answered = 0;
+    saveCurrentState();
+
+    showScreen('game');
+    drawNextPhilosophersStoneCard();
+}
+
+function drawNextPhilosophersStoneCard() {
+    if (state.pool && state.pool.length > 0) {
+        revealCard(0);
+    } else {
+        renderGameView();
+    }
+}
+
+function nextPhilosophersStoneRound() {
+    drawNextPhilosophersStoneCard();
+}
+
+function triggerSmartHat() {
+    const card = state.history[state.historyIndex];
+    if (!card || card.cardType !== 'philosophersStone') return;
+
+    const word = card.topic === 'flags' ? (card.answers[state.lang] || card.answers.en).toUpperCase() : card.guessWord.toUpperCase();
+    if (!card.revealedIndices) {
+        card.revealedIndices = [];
+    }
+
+    if (card.isFullRevealed || card.revealedIndices.length >= word.length) {
+        return;
+    }
+
+    // Find non-revealed letter indices
+    const unrevealed = [];
+    for (let i = 0; i < word.length; i++) {
+        const char = word[i];
+        if (char !== ' ' && char !== '-' && !card.revealedIndices.includes(i)) {
+            unrevealed.push(i);
+        }
+    }
+
+    if (unrevealed.length > 0) {
+        // Tap random index
+        const randIdx = unrevealed[Math.floor(Math.random() * unrevealed.length)];
+        card.revealedIndices.push(randIdx);
+
+        // Play sound or feedback
+        playTick();
+
+        // Check if all are now revealed
+        const allDone = word.split('').every((char, idx) => char === ' ' || char === '-' || card.revealedIndices.includes(idx));
+        if (allDone) {
+            card.isFullRevealed = true;
+        }
+
+        saveCurrentState();
+        renderResult();
+    }
+}
+
+function revealFullAnswer() {
+    const card = state.history[state.historyIndex];
+    if (!card || card.cardType !== 'philosophersStone') return;
+
+    card.isFullRevealed = true;
+    playTick();
     saveCurrentState();
     renderResult();
 }

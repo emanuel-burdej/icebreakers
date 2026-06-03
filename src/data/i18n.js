@@ -72,6 +72,10 @@ const I18N = {
         colName: "Meno", colSurname: "Priezvisko", colTotal: "Spolu",
         packsTitle: "Dostupné balíčky",
         aboutText: "Ice Breakers je nástroj na budovanie tímov a prehlbovanie vzťahov pomocou zmysluplných otázok a úloh.",
+        pkgStatusPhilosophersStone: "Kameň mudrcov",
+        pkgPhilosophersStone: "Kameň mudrcov", pkgPhilosophersStoneSub: "Zábavné hádanky, vlajky krajín a latinské príslovia",
+        selectTopic: "Výber témy", topicFlags: "Vlajky krajín", topicProverbs: "Latinské príslovia",
+        smartHat: "Múdry klobúk", reveal: "Odhaliť odpoveď",
         pexesoMatchBanner: "ZHODA! Vyber 2 ľudí na splnenie:",
         pexesoMismatchBanner: "BEZ ZHODY! Vyber si parťáka na splnenie:",
         congratsTitle: "Gratulujeme! 🎉", congratsDesc: "Úspešne ste prešli všetky karty z tohto balíčka."
@@ -149,6 +153,10 @@ const I18N = {
         colName: "Jméno", colSurname: "Příjmení", colTotal: "Celkem",
         packsTitle: "Dostupné balíčky",
         aboutText: "Ice Breakers je nástroj na budování týmů a prohlubování vztahů pomocí smysluplných otázek a úkolů.",
+        pkgStatusPhilosophersStone: "Kámen mudrců",
+        pkgPhilosophersStone: "Kámen mudrců", pkgPhilosophersStoneSub: "Zábavné hádanky, vlajky zemí a latinská přísloví",
+        selectTopic: "Výběr tématu", topicFlags: "Vlajky zemí", topicProverbs: "Latinská přísloví",
+        smartHat: "Moudrý klobouk", reveal: "Odhalit odpověď",
         pexesoMatchBanner: "SHODA! Vyber 2 lidi na splnění:",
         pexesoMismatchBanner: "BEZ SHODY! Vyber si parťáka na splnění:",
         congratsTitle: "Gratulujeme! 🎉", congratsDesc: "Úspěšně jste prošli všechny karty z tohoto balíčku."
@@ -225,6 +233,10 @@ const I18N = {
         colName: "First Name", colSurname: "Last Name", colTotal: "Total",
         packsTitle: "Available Packs",
         aboutText: "Ice Breakers is a tool for team building and deepening relationships through meaningful questions and tasks.",
+        pkgStatusPhilosophersStone: "Philosopher's stone",
+        pkgPhilosophersStone: "Philosopher's Stone", pkgPhilosophersStoneSub: "Fun riddles, country flags and Latin proverbs",
+        selectTopic: "Select Topic", topicFlags: "Country Flags", topicProverbs: "Latin Proverbs",
+        smartHat: "Smart Hat", reveal: "Reveal answer",
         pexesoMatchBanner: "MATCH! Pick 2 people to complete:",
         pexesoMismatchBanner: "NO MATCH! Pick a partner to complete:",
         congratsTitle: "Congratulations! 🎉", congratsDesc: "You have successfully gone through all cards in this pack."
