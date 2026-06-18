@@ -849,15 +849,16 @@ body[data-theme="dark"] .card-color-swatch {
 }
 
 #btn-prev {
-    justify-self: start;
+    flex-shrink: 0;
 }
 
 #ps-reveal-btn {
-    justify-self: start;
+    flex-shrink: 0;
 }
 
 #btn-next {
-    justify-self: end;
+    margin-left: auto;
+    flex-shrink: 0;
 }
 
 .result-nav .btn {

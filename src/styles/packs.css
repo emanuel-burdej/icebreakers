@@ -2,22 +2,20 @@
 
 .result-nav {
     width: 100% !important;
-    display: grid !important;
-    grid-template-columns: 1fr auto 1fr !important;
+    display: flex !important;
+    flex-wrap: wrap;
     align-items: center !important;
     gap: 12px !important;
-    justify-content: stretch !important;
 }
 
 #btn-prev {
-    justify-self: start !important;
+    margin-right: 0 !important;
 }
 
 #ps-reveal-btn {
-    justify-self: center !important;
-    margin: 0 auto !important;
+    margin: 0 !important;
 }
 
 #btn-next {
-    justify-self: end !important;
+    margin-left: auto !important;
 }

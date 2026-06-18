@@ -76,6 +76,44 @@ const TOPIC_I18N_KEY = {
     proverbs: 'topicProverbs'
 };
 
+const SUPPORTED_LANGS = ['sk', 'cz', 'en'];
+
+function normalizeAppLang(code) {
+    if (!code) return null;
+    const normalized = String(code).toLowerCase().replace('_', '-');
+    if (normalized.startsWith('sk')) return 'sk';
+    if (normalized.startsWith('cs') || normalized.startsWith('cz')) return 'cz';
+    if (normalized.startsWith('en')) return 'en';
+    return null;
+}
+
+function detectDeviceLang() {
+    const candidates = navigator.languages?.length
+        ? [...navigator.languages]
+        : [navigator.language, navigator.userLanguage].filter(Boolean);
+
+    for (const candidate of candidates) {
+        const mapped = normalizeAppLang(candidate);
+        if (mapped) return mapped;
+    }
+
+    return 'cz';
+}
+
+function resolveInitialLang() {
+    const stored = localStorage.getItem('ib_lang');
+    const mappedStored = normalizeAppLang(stored) || (SUPPORTED_LANGS.includes(stored) ? stored : null);
+    if (mappedStored) return mappedStored;
+
+    const detected = detectDeviceLang();
+    localStorage.setItem('ib_lang', detected);
+    return detected;
+}
+
+function applyDocumentLang(lang) {
+    document.documentElement.lang = lang;
+}
+
 const DONATION_MODE_I18N_KEY = {
     all: 'donationModeAll',
     tasks_only: 'donationModeTasksOnly',
@@ -202,7 +240,8 @@ function normalizeSessionData(data) {
     return data;
 }
 const storedDonationAmounts = JSON.parse(localStorage.getItem('ib_donation_amounts') || '{}');
-const initialLang = localStorage.getItem('ib_lang') || 'cz';
+const initialLang = resolveInitialLang();
+applyDocumentLang(initialLang);
 const initialAppStyle = normalizeAppStyle(localStorage.getItem('ib_app_style'));
 
 let state = {
@@ -1137,8 +1176,11 @@ function toggleSidebar() {
 
 
 function updateLang() {
-    state.lang = document.getElementById('langSelect').value;
+    const selected = document.getElementById('langSelect').value;
+    state.lang = normalizeAppLang(selected) || 'cz';
     localStorage.setItem('ib_lang', state.lang);
+    applyDocumentLang(state.lang);
+    document.getElementById('langSelect').value = state.lang;
     syncDefaultOrgName();
 
     // Preklad statických prvkov rozhrania
@@ -1305,14 +1347,25 @@ function resumeSession() {
     applyAppStyle(state.appStyle || localStorage.getItem('ib_app_style') || 'normal', { updateOrg: false });
     document.getElementById('noteInput').value = state.note || "";
     showScreen(state.mode ? 'game' : 'mode');
-    if (state.mode) { updateStats(); renderGameView(); }
+    if (state.mode) {
+        updateStats();
+        if (state.mode === 'quickQuestions') {
+            restoreQuickQuestionsView();
+        } else {
+            renderGameView();
+        }
+    }
 }
 function selectMode(mode) {
     state.mode = normalizeMode(mode);
     saveCurrentState();
     showScreen('game');
     updateStats();
-    renderGameView();
+    if (state.mode === 'quickQuestions') {
+        showNextQuestionCard();
+    } else {
+        renderGameView();
+    }
 }
 
 function showNextQuestionCard() {
@@ -1322,6 +1375,17 @@ function showNextQuestionCard() {
         return;
     }
     renderGameView();
+}
+
+function restoreQuickQuestionsView() {
+    const remainingQuestions = (state.pool || []).filter(card => card.cardType === 'question').length;
+    if (remainingQuestions === 0) {
+        renderGameView();
+    } else if (state.historyIndex >= 0) {
+        renderResult();
+    } else {
+        showNextQuestionCard();
+    }
 }
 
 function updateStats() {
@@ -1468,45 +1532,7 @@ function renderGameView(options = {}) {
                         <button id="spin-btn" class="btn game-primary-action" onclick="spinWheel()">${I18N[state.lang].spin}</button>
                     </div>`;
     } else if (state.mode === 'quickQuestions') {
-        const questions = (state.pool || [])
-            .map((card, index) => ({ card, index }))
-            .filter(item => item.card.cardType === 'question');
-
-        if (!questions.length) {
-            area.innerHTML = `<div style="text-align:center; padding: 40px 20px; color: var(--text-dim);"><h3 style="margin-bottom:10px;">${I18N[state.lang].congratsTitle}</h3><p>${I18N[state.lang].congratsDesc}</p></div>`;
-            renderPreviousCardAction(area);
-            return;
-        }
-
-        state.quickQCursor = Math.floor(Math.random() * questions.length);
-
-        const cardsHtml = questions.map((item, order) => `
-    <div class="question-fan-card"
-        data-question-index="${item.index}"
-        data-question-order="${order}"
-        data-rotate="${order % 2 === 0 ? '-1' : '1'}"
-        onclick="selectQuickQuestion(${item.index}, ${order})">
-
-        <div class="question-fan-card-inner">
-            <div class="question-fan-badge">${I18N[state.lang].question}</div>
-        </div>
-    </div>
-`).join('');
-
-        area.innerHTML = `
-                    <div class="question-fan-wrap">
-                        <div class="question-fan-help">${I18N[state.lang].descQuickQuestions}</div>
-                        <div class="question-fan-shell">
-                            <button class="question-fan-arrow left" onclick="stepQuickQuestionFan(-1)">◀</button>
-                            <button class="question-fan-arrow right" onclick="stepQuickQuestionFan(1)">▶</button>
-                            <div class="question-fan-stage">
-                                <div id="question-fan" class="question-fan" data-total="${questions.length}">${cardsHtml}</div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-
-        setupQuickQuestionFan();
+        showNextQuestionCard();
     } else if (state.mode === 'pickCards') {
         if (!preservePickStyle || !state.cardStyle) {
             // Vygenerujeme náhodný vizuál, ktorý nie je rovnaký ako posledné dva
@@ -2621,20 +2647,7 @@ function nextRound() {
     renderGameView();
 }
 function nextQuickQuestion() {
-    renderGameView();
-
-    requestAnimationFrame(() => {
-        const fan = document.getElementById('question-fan');
-        const stage = fan?.closest('.question-fan-stage');
-        if (!stage) return;
-
-        stage.classList.remove('hint-swipe');
-        void stage.offsetWidth;
-
-        setTimeout(() => {
-            stage.classList.add('hint-swipe');
-        }, 80);
-    });
+    showNextQuestionCard();
 }
 
 function goHome() {
@@ -2822,7 +2835,11 @@ function loadFromHistory(key) {
     document.getElementById('noteInput').value = state.note || "";
     showScreen('game');
     updateStats();
-    renderGameView();
+    if (state.mode === 'quickQuestions') {
+        restoreQuickQuestionsView();
+    } else {
+        renderGameView();
+    }
 }
 
 function showAbout() { toggleSidebar(); showScreen('about', 'forward'); }
