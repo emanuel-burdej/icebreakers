@@ -1,0 +1,24 @@
+/* Pack-specific styles live here as the pack UI grows. */
+
+.result-nav {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: stretch !important;
+    gap: 8px !important;
+}
+
+#btn-prev {
+    margin-right: 0 !important;
+    grid-column: 1;
+}
+
+#ps-reveal-btn {
+    margin: 0 !important;
+    grid-column: 2;
+}
+
+#btn-next {
+    margin-left: 0 !important;
+    grid-column: 3;
+}
