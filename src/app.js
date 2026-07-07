@@ -68,12 +68,22 @@ const PHILOSOPHERS_STONE_TOPICS = [
             cz: 'Doplňte chybějící slovo ve slavných výrocích.',
             en: 'Fill in the missing word in famous proverbs.'
         }
+    },
+    {
+        key: 'logos',
+        titleKey: 'topicLogos',
+        desc: {
+            sk: 'Uhádni spoločnosť podľa jej loga.',
+            cz: 'Uhádněte společnost podle jejího loga.',
+            en: 'Guess the company by its logo.'
+        }
     }
 ];
 
 const TOPIC_I18N_KEY = {
     flags: 'topicFlags',
-    proverbs: 'topicProverbs'
+    proverbs: 'topicProverbs',
+    logos: 'topicLogos'
 };
 
 const SUPPORTED_LANGS = ['sk', 'cz', 'en'];
@@ -140,8 +150,87 @@ function getPhilosophersStoneTopicLabel(topicKey, lang = state.lang) {
 }
 
 function getPhilosophersStoneTopicIcon(topicKey, size = 22) {
-    const iconKey = topicKey === 'proverbs' ? 'proverbs' : 'flags';
+    const iconKey = topicKey === 'proverbs' ? 'proverbs' : topicKey === 'logos' ? 'logos' : 'flags';
     return scaleIcon(ICONS[iconKey], size);
+}
+
+function isLogoQuizCard(card) {
+    if (!card) return false;
+    if (card.cardType === 'unicornLogos') return true;
+    return card.cardType === 'philosophersStone' && card.topic === 'logos';
+}
+
+function migrateLogoQuizCard(card) {
+    if (!card) return card;
+    if (card.cardType === 'unicornLogos') {
+        return {
+            ...card,
+            cardType: 'philosophersStone',
+            topic: 'logos'
+        };
+    }
+    return card;
+}
+
+function getCompanyLogoUrl(companyCode) {
+    return new URL(`src/data/companyIcons/${companyCode}.png`, window.location.href).href;
+}
+
+function prepareLogoQuizCard(card) {
+    if (!isLogoQuizCard(card) || card.quizOptions) return card;
+    if (!Array.isArray(UNICORN_COMPANIES) || UNICORN_COMPANIES.length < 3) return card;
+
+    const others = UNICORN_COMPANIES.filter((company) => company.companyCode !== card.companyCode);
+    const distractors = shuffleItems([...others]).slice(0, 2);
+    card.quizOptions = shuffleItems([
+        { companyCode: card.companyCode, companyName: card.companyName, isCorrect: true },
+        ...distractors.map((company) => ({
+            companyCode: company.companyCode,
+            companyName: company.companyName,
+            isCorrect: false
+        }))
+    ]);
+    return card;
+}
+
+function buildPsLogosQuizHtml(card) {
+    const logoUrl = getCompanyLogoUrl(card.companyCode);
+    const hasAnswer = card.selectedAnswerIndex != null;
+    const quizOptions = card.quizOptions || [];
+    const optionsHtml = quizOptions.map((option, index) => {
+        let optionClass = 'ps-logo-option';
+        if (hasAnswer) {
+            if (option.isCorrect) optionClass += ' is-correct';
+            else if (index === card.selectedAnswerIndex) optionClass += ' is-wrong';
+            else optionClass += ' is-muted';
+        }
+        const disabledAttr = hasAnswer ? 'disabled' : '';
+        const clickAttr = hasAnswer ? '' : `onclick="selectLogoQuizAnswer(${index})"`;
+        return `<button type="button" class="${optionClass}" ${clickAttr} ${disabledAttr}>${escapeHtml(option.companyName)}</button>`;
+    }).join('');
+
+    const fallbackOptions = quizOptions.length
+        ? ''
+        : '<p class="ps-logo-quiz-error">Quiz options could not be loaded.</p>';
+
+    return `
+        <div class="ps-logos-layout">
+            <img class="ps-logo-display" src="${escapeHtml(logoUrl)}" alt="">
+            <div class="ps-logo-options">${optionsHtml || fallbackOptions}</div>
+        </div>
+    `;
+}
+
+function selectLogoQuizAnswer(optionIndex) {
+    const card = state.history[state.historyIndex];
+    if (!isLogoQuizCard(card) || card.selectedAnswerIndex != null) return;
+    if (!card.quizOptions || !card.quizOptions[optionIndex]) return;
+
+    card.selectedAnswerIndex = optionIndex;
+    card.isCorrect = card.quizOptions[optionIndex].isCorrect;
+    playTick();
+    saveCurrentState();
+    renderResult();
 }
 
 function buildPhilosophersStoneModeHtml(size = 14) {
@@ -225,8 +314,13 @@ function normalizeSessionData(data) {
     if (!data) return data;
     data.mode = normalizeMode(data.mode);
     data.appStyle = normalizeAppStyle(data.appStyle || localStorage.getItem('ib_app_style'));
-    data.pool = normalizeCards(data.pool || []);
-    data.history = normalizeCards(data.history || []);
+    if (data.packKey === 'unicornLogos' || data.mode === 'unicornLogos_play') {
+        data.packKey = 'philosophersStone';
+        data.mode = 'philosophersStone_play';
+        data.selectedTopic = 'logos';
+    }
+    data.pool = normalizeCards(data.pool || []).map(migrateLogoQuizCard);
+    data.history = normalizeCards(data.history || []).map(migrateLogoQuizCard);
     data.donationAmounts = normalizeDonationAmounts(data.donationAmounts || {});
     data.collaborationParticipants = data.collaborationParticipants || [];
     data.collaborationRemainingParticipants = data.collaborationRemainingParticipants || [];
@@ -771,7 +865,7 @@ function getSessionMeta(data) {
     let modeName = '';
     let modeIcon = '';
     if (isPhilosophersStone) {
-        const topicKey = data.selectedTopic || 'flags';
+        const topicKey = data.selectedTopic || (data.history || []).find(c => c.topic)?.topic || 'flags';
         modeName = getPhilosophersStoneTopicLabel(topicKey);
         modeIcon = getPhilosophersStoneTopicIcon(topicKey);
     } else {
@@ -1144,6 +1238,10 @@ function handleGameBack() {
         }
         return;
     }
+    if (state.packKey === 'philosophersStone') {
+        showScreen('mode', 'back');
+        return;
+    }
     showScreen('mode', 'back');
 }
 
@@ -1266,12 +1364,13 @@ function renderPacks() {
         if (key === 'philosophersStone') {
             const countFlags = questions.filter(c => c.topic === 'flags').length;
             const countProverbs = questions.filter(c => c.topic === 'proverbs').length;
+            const countLogos = questions.filter(c => c.topic === 'logos').length;
             if (state.lang === 'sk') {
-                sub = `${countFlags} vlajok krajín • ${countProverbs} latinských prísloví`;
+                sub = `${countFlags} vlajok krajín • ${countProverbs} latinských prísloví • ${countLogos} log spoločností`;
             } else if (state.lang === 'cz') {
-                sub = `${countFlags} vlajek zemí • ${countProverbs} latinských přísloví`;
+                sub = `${countFlags} vlajek zemí • ${countProverbs} latinských přísloví • ${countLogos} log společností`;
             } else {
-                sub = `${countFlags} country flags • ${countProverbs} Latin proverbs`;
+                sub = `${countFlags} country flags • ${countProverbs} Latin proverbs • ${countLogos} company logos`;
             }
             modeHtml = buildPhilosophersStoneModeHtml(14);
         } else {
@@ -1351,6 +1450,8 @@ function resumeSession() {
         updateStats();
         if (state.mode === 'quickQuestions') {
             restoreQuickQuestionsView();
+        } else if (state.mode === 'philosophersStone_play') {
+            restorePhilosophersStoneView();
         } else {
             renderGameView();
         }
@@ -2187,7 +2288,10 @@ function handleWheelAction(action) {
 }
 
 function revealCard(idx) {
-    const card = state.pool.splice(idx, 1)[0];
+    let card = state.pool.splice(idx, 1)[0];
+    if (isLogoQuizCard(card)) {
+        card = prepareLogoQuizCard(card);
+    }
     state.history.push(card);
     state.historyIndex = state.history.length - 1;
     state.answered++;
@@ -2259,6 +2363,14 @@ function getCardDetailTypeLabel(card) {
     const cardType = normalizeCardType(card?.cardType);
     const hasCollaborationPair = isCollaborationPexeso() && card?.assignees?.length === 2;
 
+    if (cardType === 'philosophersStone' && card?.topic) {
+        return getPhilosophersStoneTopicLabel(card.topic);
+    }
+
+    if (cardType === 'unicornLogos') {
+        return getPhilosophersStoneTopicLabel('logos');
+    }
+
     if (cardType === 'philosophersStone') {
         return I18N[state.lang].pkgStatusPhilosophersStone || "Kameň mudrcov";
     }
@@ -2318,9 +2430,14 @@ function renderResult() {
         resGeeEl.style.color = '';
     }
 
-    if (card.cardType === 'philosophersStone') {
-        const word = card.topic === 'flags' ? (card.answers[state.lang] || card.answers.en).toUpperCase() : card.guessWord.toUpperCase();
+    if (isLogoQuizCard(card)) {
+        prepareLogoQuizCard(card);
+        resTextEl.innerHTML = buildPsLogosQuizHtml(card);
+    } else if (card.cardType === 'philosophersStone') {
         const isFlags = card.topic === 'flags';
+        const word = isFlags
+            ? (card.answers[state.lang] || card.answers.en).toUpperCase()
+            : (card.guessWord || '').toUpperCase();
         const lettersHtml = buildPsMaskedLettersHtml(card, word, isFlags);
 
         let customHtml = "";
@@ -2354,7 +2471,7 @@ function renderResult() {
 
     const revealBtn = document.getElementById('ps-reveal-btn');
     if (revealBtn) {
-        if (card.cardType === 'philosophersStone') {
+        if (card.cardType === 'philosophersStone' && !isLogoQuizCard(card)) {
             revealBtn.style.display = 'inline-flex';
             revealBtn.disabled = card.isFullRevealed;
             revealBtn.style.opacity = card.isFullRevealed ? '0.5' : '1';
@@ -2381,7 +2498,7 @@ function renderResult() {
         capitalBtn.setAttribute('aria-label', I18N[state.lang].revealCapital);
     }
     const topics = getCardTopics(card);
-    const isPS = card.cardType === 'philosophersStone';
+    const isPS = card.cardType === 'philosophersStone' && !isLogoQuizCard(card);
     const showWand = topics.length > 0 || isPS;
     inspirationBtn.classList.toggle('is-hidden-display', !showWand);
     if (isPS) {
@@ -2412,10 +2529,17 @@ function renderResult() {
 
     // Pin button logic
     const pinBtn = document.getElementById('pin-btn-el');
-    pinBtn.style.display = donationsEnabled ? 'flex' : 'none';
-    pinBtn.className = card.isPinned ? 'pin-btn active' : 'pin-btn';
+    const donationRow = pinBtn?.closest('.result-donation-row');
+    const showDonationPin = donationsEnabled && card.cardType !== 'philosophersStone';
+    if (pinBtn) {
+        pinBtn.style.display = showDonationPin ? 'flex' : 'none';
+        pinBtn.className = card.isPinned ? 'pin-btn active' : 'pin-btn';
+    }
+    if (donationRow) {
+        donationRow.style.display = showDonationPin ? 'flex' : 'none';
+    }
 
-    if (donationsEnabled) {
+    if (showDonationPin) {
         const donationConfig = getDonationConfig(card);
         pinBtn.innerText = i18nText(card.isPinned ? donationConfig.remove : donationConfig.btn, {
             org: orgName,
@@ -2537,9 +2661,17 @@ function nextPhilosophersStoneRound() {
     drawNextPhilosophersStoneCard();
 }
 
+function restorePhilosophersStoneView() {
+    if (state.historyIndex >= 0) {
+        renderResult();
+    } else {
+        drawNextPhilosophersStoneCard();
+    }
+}
+
 function triggerSmartHat() {
     const card = state.history[state.historyIndex];
-    if (!card || card.cardType !== 'philosophersStone') return;
+    if (!card || card.cardType !== 'philosophersStone' || isLogoQuizCard(card)) return;
 
     const word = card.topic === 'flags' ? (card.answers[state.lang] || card.answers.en).toUpperCase() : card.guessWord.toUpperCase();
     if (!card.revealedIndices) {
@@ -2837,6 +2969,8 @@ function loadFromHistory(key) {
     updateStats();
     if (state.mode === 'quickQuestions') {
         restoreQuickQuestionsView();
+    } else if (state.mode === 'philosophersStone_play') {
+        restorePhilosophersStoneView();
     } else {
         renderGameView();
     }

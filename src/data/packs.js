@@ -185,8 +185,15 @@ const PHILOSOPHERS_STONE_PACK = [
     { cardType: 'philosophersStone', topic: 'proverbs', proverb: "Vox populi, vox {word}", guessWord: "DEI", translations: { sk: "Hlas ľudu, hlas Boží", cz: "Hlas lidu, hlas Boží", en: "The voice of the people is the voice of God" } },
     { cardType: 'philosophersStone', topic: 'proverbs', proverb: "Panem et {word}", guessWord: "CIRCENSES", translations: { sk: "Chlieb a hry", cz: "Chléb a hry", en: "Bread and circuses" } },
     { cardType: 'philosophersStone', topic: 'proverbs', proverb: "De gustibus non est {word}", guessWord: "DISPUTANDUM", translations: { sk: "O vkuse sa nedá diskutovať", cz: "O vkusu se nedá diskutovat", en: "There is no disputing about taste" } },
+
+    ...PHILOSOPHERS_STONE_LOGOS_CARDS
 ];
 
-const PACKS = { basic: BASIC_PACK, advanced: ADVANCED_PACK, collaboration: COLLABORATION_PACK, philosophersStone: PHILOSOPHERS_STONE_PACK };
+const PACKS = {
+    basic: BASIC_PACK,
+    advanced: ADVANCED_PACK,
+    collaboration: COLLABORATION_PACK,
+    philosophersStone: PHILOSOPHERS_STONE_PACK
+};
 
 
