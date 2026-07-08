@@ -2548,13 +2548,28 @@ function renderResult() {
     }
 
     const prevBtn = document.getElementById('btn-prev');
+    const resultNav = prevBtn?.closest('.result-nav');
+    const isLogosQuiz = isLogoQuizCard(card);
     const hasPrev = state.historyIndex > 0;
-    prevBtn.style.visibility = hasPrev ? 'visible' : 'hidden';
-    prevBtn.disabled = !hasPrev;
-    prevBtn.style.pointerEvents = hasPrev ? 'auto' : 'none';
+
+    if (isLogosQuiz) {
+        prevBtn.classList.remove('is-hidden');
+        prevBtn.style.visibility = 'visible';
+        prevBtn.disabled = false;
+        prevBtn.style.pointerEvents = 'auto';
+        prevBtn.innerText = `← ${I18N[state.lang].back}`;
+        prevBtn.onclick = hasPrev ? prevRound : handleGameBack;
+        resultNav?.classList.add('is-logos-nav');
+    } else {
+        prevBtn.onclick = prevRound;
+        prevBtn.style.visibility = hasPrev ? 'visible' : 'hidden';
+        prevBtn.disabled = !hasPrev;
+        prevBtn.style.pointerEvents = hasPrev ? 'auto' : 'none';
+        prevBtn.innerText = `← ${I18N[state.lang].prev}`;
+        resultNav?.classList.remove('is-logos-nav');
+    }
 
     const btnNext = document.getElementById('btn-next');
-    prevBtn.innerText = `← ${I18N[state.lang].prev}`;
     btnNext.innerText = `${I18N[state.lang].next} →`;
     if (state.mode === 'philosophersStone_play') {
         btnNext.onclick = nextPhilosophersStoneRound;
