@@ -1315,6 +1315,62 @@ body[data-theme="dark"] .card-color-swatch {
     cursor: default;
 }
 
+.ps-logo-summary {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-dim);
+}
+
+.ps-logo-summary-title {
+    margin: 0 0 10px;
+    color: var(--text);
+}
+
+.ps-logo-summary-desc {
+    margin: 0 0 24px;
+}
+
+.ps-logo-summary-stats {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.ps-logo-summary-stat {
+    min-width: 120px;
+    padding: 16px 20px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.ps-logo-summary-value {
+    display: block;
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 6px;
+}
+
+.ps-logo-summary-label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.ps-logo-summary-stat.is-correct .ps-logo-summary-value {
+    color: #10b981;
+}
+
+.ps-logo-summary-stat.is-wrong .ps-logo-summary-value {
+    color: #f87171;
+}
+
+.ps-logo-summary-stat.is-unanswered .ps-logo-summary-value {
+    color: #94a3b8;
+}
+
 /* dummy class to consume the leftover media query brackets */
 .dummy-media-closer {
     font-size: 1rem;

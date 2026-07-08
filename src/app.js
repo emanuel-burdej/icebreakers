@@ -193,6 +193,47 @@ function prepareLogoQuizCard(card) {
     return card;
 }
 
+function isLogosQuizSession(data = state) {
+    return data.mode === 'philosophersStone_play' && data.selectedTopic === 'logos';
+}
+
+function getLogoQuizStats(data = state) {
+    const cards = (data.history || []).filter((card) => isLogoQuizCard(card));
+    const answeredCards = cards.filter((card) => card.selectedAnswerIndex != null);
+    const correct = answeredCards.filter((card) => card.isCorrect).length;
+    const wrong = answeredCards.length - correct;
+    return {
+        total: cards.length,
+        correct,
+        wrong,
+        unanswered: cards.length - answeredCards.length
+    };
+}
+
+function buildLogoQuizSummaryHtml() {
+    const stats = getLogoQuizStats();
+    return `
+        <div class="ps-logo-summary">
+            <h3 class="ps-logo-summary-title">${I18N[state.lang].congratsTitle}</h3>
+            <p class="ps-logo-summary-desc">${I18N[state.lang].congratsDesc}</p>
+            <div class="ps-logo-summary-stats">
+                <div class="ps-logo-summary-stat is-correct">
+                    <span class="ps-logo-summary-value">${stats.correct}</span>
+                    <span class="ps-logo-summary-label">${I18N[state.lang].logoQuizSummaryCorrect}</span>
+                </div>
+                <div class="ps-logo-summary-stat is-wrong">
+                    <span class="ps-logo-summary-value">${stats.wrong}</span>
+                    <span class="ps-logo-summary-label">${I18N[state.lang].logoQuizSummaryWrong}</span>
+                </div>
+                <div class="ps-logo-summary-stat is-unanswered">
+                    <span class="ps-logo-summary-value">${stats.unanswered}</span>
+                    <span class="ps-logo-summary-label">${I18N[state.lang].logoQuizSummaryUnanswered}</span>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
 function buildPsLogosQuizHtml(card) {
     const logoUrl = getCompanyLogoUrl(card.companyCode);
     const hasAnswer = card.selectedAnswerIndex != null;
@@ -1541,7 +1582,9 @@ function renderGameView(options = {}) {
     }
 
     if (state.pool.length === 0) {
-        area.innerHTML = `<div style="text-align:center; padding: 40px 20px; color: var(--text-dim);"><h3 style="margin-bottom:10px;">${I18N[state.lang].congratsTitle}</h3><p>${I18N[state.lang].congratsDesc}</p></div>`;
+        area.innerHTML = isLogosQuizSession()
+            ? buildLogoQuizSummaryHtml()
+            : `<div style="text-align:center; padding: 40px 20px; color: var(--text-dim);"><h3 style="margin-bottom:10px;">${I18N[state.lang].congratsTitle}</h3><p>${I18N[state.lang].congratsDesc}</p></div>`;
         renderPreviousCardAction(area);
         return;
     }
