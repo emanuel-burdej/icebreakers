@@ -2716,6 +2716,11 @@ function drawNextPhilosophersStoneCard() {
 }
 
 function nextPhilosophersStoneRound() {
+    if (state.historyIndex < state.history.length - 1) {
+        state.historyIndex++;
+        renderResult();
+        return;
+    }
     drawNextPhilosophersStoneCard();
 }
 
